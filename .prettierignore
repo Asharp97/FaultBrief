@@ -1,0 +1,17 @@
+.git/
+.tools/
+**/node_modules/
+**/.next/
+**/.next-smoke/
+**/out/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/*.tsbuildinfo
+**/pnpm-lock.yaml
+**/uv.lock
+**/next-env.d.ts
+training/artifacts/
+training/data/private/
+LICENSE

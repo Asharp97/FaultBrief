@@ -1,0 +1,20 @@
+[project]
+name = "faultbrief-backend"
+version = "0.1.0"
+description = "API and shared Python development environment for FaultBrief"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "pydantic-settings>=2.6,<3",
+  "uvicorn>=0.30,<1",
+]
+
+[dependency-groups]
+dev = [
+  "httpx2>=2.13,<3",
+  "pytest>=8,<10",
+  "ruff>=0.12,<1",
+]
+
+[tool.uv]
+package = false

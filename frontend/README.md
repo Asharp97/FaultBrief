@@ -5,15 +5,15 @@ Static Next.js marketing page using Tailwind CSS, GSAP, and self-hosted open-sou
 ## Development
 
 ```sh
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm run dev
 ```
 
 ## Verification and export
 
 ```sh
-npm run typecheck
-npm run build
+pnpm run typecheck
+pnpm run build
 ```
 
 The static production site is generated in `out/`. Serve that directory with a static host; it needs no serverless functions. `next start` is not used for a static export.
@@ -31,3 +31,5 @@ The three interactive investigations are prepared examples. They do not call AI 
 - Continuous idle polling of a Neon-backed job table can keep database compute active; design worker signaling accordingly.
 
 No domain, backend credentials, authentication, or production deployment has been configured by this frontend.
+
+For the complete development environment, use pnpm run setup and pnpm run dev from the repository root. See ../docs/development.md.

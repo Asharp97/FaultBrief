@@ -1,0 +1,20 @@
+{
+  "name": "faultbrief",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "check": "node scripts/check.mjs",
+    "smoke": "node scripts/dev.mjs --smoke",
+    "format": "pnpm --dir frontend exec prettier .. --ignore-path ../.prettierignore --ignore-path ../.gitignore --write",
+    "format:check": "pnpm --dir frontend exec prettier .. --ignore-path ../.prettierignore --ignore-path ../.gitignore --check",
+    "frontend:build": "pnpm --dir frontend build",
+    "frontend:typecheck": "pnpm --dir frontend typecheck"
+  }
+}

@@ -1,0 +1,55 @@
+# Secrets and local configuration
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+.envrc
+*.pem
+*.key
+
+# JavaScript dependencies and generated assets
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+.next-smoke/
+**/.next-smoke/
+out/
+**/out/
+dist/
+**/dist/
+*.tsbuildinfo
+.pnpm-store/
+**/.pnpm-store/
+
+# Python dependencies, caches, and test output
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/.pytest_cache/
+.ruff_cache/
+**/.ruff_cache/
+.mypy_cache/
+**/.mypy_cache/
+.coverage
+coverage/
+htmlcov/
+.ipynb_checkpoints/
+
+# Local toolchain and private ML data
+.tools/
+**/.tools/
+training/artifacts/
+training/data/private/
+
+# Local machine noise
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
