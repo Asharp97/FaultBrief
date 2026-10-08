@@ -84,7 +84,7 @@ The homepage's samples use prepared synthetic data. The separate demo service cu
 
 ## Architecture and contribution
 
-Read [architecture](docs/architecture.md), [development](docs/development.md), and [contribution conventions](CONTRIBUTING.md). Every repository-changing handoff includes a suggested commit message. The first milestone is one investigation verified against a deliberately introduced failure.
+Read [architecture](docs/architecture.md), [development](docs/development.md), [continuous integration](docs/continuous-integration.md), and [contribution conventions](CONTRIBUTING.md). Every repository-changing handoff includes a suggested commit message. The first milestone is one investigation verified against a deliberately introduced failure.
 
 ## License
 
