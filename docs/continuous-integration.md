@@ -54,3 +54,11 @@ A 404 on the first command means no branch-protection rule exists. A 403 means t
 4. Remove the intentional failure in a follow-up commit. Confirm all checks pass, leaving a reviewable CI change.
 
 A local failing command proves failure propagation; the GitHub pull-request result and merge state prove enforcement. Do not report the latter as verified until it has actually been observed.
+
+## Recorded enforcement verification
+
+Verified on 2026-10-09 (Europe/Istanbul) using [PR #1](https://github.com/Asharp97/FaultBrief/pull/1).
+
+The intentionally unformatted `ci-negative-probe.json` at commit `0272075a459a2188e6e359d18e668ed8e26b3404` made [the required CI run fail](https://github.com/Asharp97/FaultBrief/actions/runs/37846116661). The logs identified the probe as a Prettier violation and the job exited with code 1. GitHub reported `mergeable: true` and `mergeable_state: blocked` while the `FaultBrief CI` check from app 15368 had conclusion `failure`; the PR was not a draft. Administrator enforcement was confirmed active through the branch-protection API.
+
+The temporary probe was then removed. The final branch must pass the complete pipeline before review and merge; the failed probe is not part of the final PR diff.
