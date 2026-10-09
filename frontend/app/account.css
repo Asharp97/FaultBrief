@@ -110,6 +110,26 @@
   font: 12px var(--font-mono);
   overflow-wrap: anywhere;
 }
+.team-section {
+  margin-top: 24px;
+}
+.member-actions,
+.member-role-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.member-role-form label {
+  display: grid;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.member-role-form select {
+  background: white;
+  border: 1px solid var(--color-rule-gray);
+  padding: 10px;
+}
 @media (max-width: 700px) {
   .account-grid {
     grid-template-columns: 1fr;

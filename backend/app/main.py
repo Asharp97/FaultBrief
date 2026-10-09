@@ -29,7 +29,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         version="0.2.0",
         lifespan=lifespan,
         description="Scoped workspace/customer API. Investigations queue jobs; "
-        "the investigation worker and browser sign-in arrive later.",
+        "browser authentication uses the Neon SDK; the investigation worker arrives later.",
     )
     application.state.database_engine = engine
     application.state.token_verifier = TokenVerifier(settings)
@@ -37,7 +37,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         CORSMiddleware,
         allow_origins=settings.cors_allowed_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PATCH"],
         allow_headers=["Authorization", "Content-Type"],
     )
     application.include_router(router)

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth/client";
+import { WorkspaceMembers } from "@/components/workspace-members";
 
 type Workspace = { id: string; name: string };
 export function WorkspaceHome({ name, email }: { name: string; email: string }) {
@@ -10,6 +11,7 @@ export function WorkspaceHome({ name, email }: { name: string; email: string }) 
   const [identity, setIdentity] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Workspace | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -113,6 +115,12 @@ export function WorkspaceHome({ name, email }: { name: string; email: string }) 
                 <li key={item.id}>
                   <strong>{item.name}</strong>
                   <code>{item.id}</code>
+                  <button
+                    className="button button-outline button-small"
+                    onClick={() => setSelected(item)}
+                  >
+                    View team for {item.name}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -136,7 +144,27 @@ export function WorkspaceHome({ name, email }: { name: string; email: string }) 
               ? "Your verified identity is connected to the FaultBrief API."
               : "Connecting your account…"}
           </p>
-          {identity && <code className="account-id">{identity}</code>}
+          {identity && (
+            <>
+              <p className="account-muted">Your FaultBrief user ID</p>
+              <code className="account-id">{identity}</code>
+              <p>
+                <button
+                  className="button button-outline button-small"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(identity);
+                      setMessage("User ID copied. Share it with your workspace owner.");
+                    } catch {
+                      setMessage("Could not copy. Select and copy your user ID above.");
+                    }
+                  }}
+                >
+                  Copy my user ID
+                </button>
+              </p>
+            </>
+          )}
           <p className="account-muted">
             Workspace membership controls what you can access. Your passwords and sessions stay with
             Neon Auth.
@@ -150,6 +178,9 @@ export function WorkspaceHome({ name, email }: { name: string; email: string }) 
           </p>
         </section>
       </div>
+      {selected && identity && (
+        <WorkspaceMembers key={selected.id} workspace={selected} userId={identity} />
+      )}
     </main>
   );
 }

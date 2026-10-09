@@ -19,16 +19,17 @@ Bruno reads the collection's local `.env` through [process environment variables
 
 ## What to test first
 
-| Order | Folder                 | What you establish                                                         |
-| ----- | ---------------------- | -------------------------------------------------------------------------- |
-| 1     | 01 Readiness           | API health, OpenAPI, Swagger, ReDoc, optional demo health                  |
-| 2     | 02 Identity            | Stable user A, distinct user B, missing/malformed token rejection          |
-| 3     | 03 Company A setup     | Workspace → owner membership → customer → integration → case → queued job  |
-| 4     | 04 Company B setup     | Independent company, same external customer ID, separate case              |
-| 5     | 05 Validation          | Bad inputs, forged fields, duplicate rejection, pagination, write rollback |
-| 6     | 06 Workspace isolation | Both companies stay separate across reads, writes, cases, and feedback     |
-| 7     | 07 Report fixture      | Optional populated tool/evidence/report responses and feedback             |
-| 8     | 08 Viewer permissions  | Optional viewer reads and feedback succeed; configuration/writes fail      |
+| Order | Folder                 | What you establish                                                                    |
+| ----- | ---------------------- | ------------------------------------------------------------------------------------- |
+| 1     | 01 Readiness           | API health, OpenAPI, Swagger, ReDoc, optional demo health                             |
+| 2     | 02 Identity            | Stable user A, distinct user B, missing/malformed token rejection                     |
+| 3     | 03 Company A setup     | Workspace → owner membership → customer → integration → case → queued job             |
+| 4     | 04 Company B setup     | Independent company, same external customer ID, separate case                         |
+| 5     | 05 Validation          | Bad inputs, forged fields, duplicate rejection, pagination, write rollback            |
+| 6     | 06 Workspace isolation | Both companies stay separate across reads, writes, cases, and feedback                |
+| 7     | 07 Report fixture      | Optional populated tool/evidence/report responses and feedback                        |
+| 8     | 08 Viewer permissions  | Optional viewer reads and feedback succeed; configuration/writes fail                 |
+| 9     | 09 Team management     | Owner provisioning, role changes, last-owner protection, revocation, and reactivation |
 
 Start by sending **01 Readiness / 01 API health and new run**. It resets captured core IDs and generates a unique `run_id`. Then send requests top to bottom, or use the collection runner. Do not run that reset request halfway through a session. IDs are runtime variables, so later requests work without editing URLs or request bodies. Missing prerequisites produce an explanatory script error.
 
@@ -38,7 +39,7 @@ A pass creates two synthetic workspaces, two customers, one disabled integration
 
 ## Optional: populated reports and viewer permissions
 
-There is no report-creation or membership-management API yet. The operator-only `seed_fixture.py` creates a separate, clearly synthetic completed case and an optional viewer membership. It never runs diagnostics or calls a model. It requires the development database used by your API, rejects production settings, and only accepts a `Bruno manual A - ...` workspace, its own customer, and its active owner. It does not change existing roles or reactivate revoked memberships.
+There is no report-creation API yet. Membership management is now available to workspace owners; folder 09 tests it. For backward-compatible populated-report/viewer fixtures, the operator-only `seed_fixture.py` creates a separate, clearly synthetic completed case and an optional viewer membership. It never runs diagnostics or calls a model. It requires the development database used by your API, rejects production settings, and only accepts a `Bruno manual A - ...` workspace, its own customer, and its active owner. It does not change existing roles or reactivate revoked memberships.
 
 1. Finish folders 01–06. In Bruno's runtime variables, copy `workspace_a_id`, `customer_a_id`, and `user_a_id`.
 2. For viewer tests, fill `FAULTBRIEF_BRUNO_TOKEN_VIEWER` with a third user's JWT, enable `run_viewer_tests`, and send **02 Identity / 06 Optional viewer identity** by itself. Copy the response's `id` (`user_viewer_id`). Do not run folder 08 yet.
@@ -54,12 +55,20 @@ There is no report-creation or membership-management API yet. The operator-only 
 
 The first feedback POST for each user expects 201; the next deliberately expects 409. To rerun these optional folders, run the helper again and replace the fixture IDs: it makes a new synthetic case/report without feedback. You can reuse the same manual workspace and viewer membership. The original queued investigation stays unchanged.
 
+## Team management sequence
+
+Run folder **09 Team management** after 01–06 (and optional 07–08 if enabled). It has 30 ordered checks and uses the existing A/B test JWTs. No fixture helper or third account is needed. It temporarily adds user B to the synthetic A workspace as viewer, changes roles, exercises ownership transfer and the last-owner safeguard, revokes access, and reactivates the same membership. It finishes with B's access to A revoked and A restored as owner. New runs create fresh A/B workspaces as usual. Do not rerun the isolation folder during the middle of this sequence, while B deliberately has access to A.
+
+The two new membership operations are included in the 116-request collection and `coverage.json`. Backend permissions remain authoritative; a role claim inside a JWT does not grant workspace ownership.
+
 ## Endpoint coverage
 
-All **18 application operations** in `docs/api/openapi.json` have requests. Additional requests cover FastAPI documentation and the demo service's health endpoint. [coverage.json](coverage.json) maps every request to its method, contract path, expected status, and optional flag.
+All **20 application operations** in `docs/api/openapi.json` have requests. Additional requests cover FastAPI documentation and the demo service's health endpoint. [coverage.json](coverage.json) maps every request to its method, contract path, expected status, and optional flag.
 
 | Method | Path suffix under `/v1/workspaces/{workspace_id}`                 | Primary folder      |
 | ------ | ----------------------------------------------------------------- | ------------------- |
+| POST   | `/memberships`                                                    | 09 Team management  |
+| PATCH  | `/memberships/{membership_id}`                                    | 09 Team management  |
 | GET    | `/memberships`                                                    | 03 Company A setup  |
 | POST   | `/customers`                                                      | 03 Company A setup  |
 | GET    | `/customers`                                                      | 03 Company A setup  |

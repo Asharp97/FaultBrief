@@ -56,6 +56,24 @@ class MembershipRead(RecordRead):
     active: bool
 
 
+class MembershipCreate(Contract):
+    user_id: UUID
+    role: MembershipRole = MembershipRole.VIEWER
+
+
+class MembershipUpdate(Contract):
+    role: MembershipRole | None = None
+    active: bool | None = Field(default=None, strict=True)
+
+    @model_validator(mode="after")
+    def explicit_change(self) -> "MembershipUpdate":
+        if not self.model_fields_set or any(
+            getattr(self, field) is None for field in self.model_fields_set
+        ):
+            raise ValueError("Provide a role or active flag; null values are not allowed.")
+        return self
+
+
 class CustomerCreate(Contract):
     name: str = Field(min_length=1, max_length=120)
     external_id: str = Field(min_length=1, max_length=128)

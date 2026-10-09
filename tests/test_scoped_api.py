@@ -91,6 +91,132 @@ def investigation(client, workspace_id, customer_id):
     return response.json()["id"]
 
 
+def test_owner_can_add_revoke_and_reactivate_teammate_without_changing_identity(actors):
+    owner, teammate = actors("owner"), actors("teammate")
+    wid = workspace(owner, "Team permissions")
+    user_id = teammate.get("/v1/me").json()["id"]
+    path = f"/v1/workspaces/{wid}/memberships"
+    assert teammate.get(path).status_code == 404
+    added = owner.post(path, json={"user_id": user_id})
+    assert added.status_code == 201 and added.json()["role"] == "viewer"
+    member_path = f"{path}/{added.json()['id']}"
+    assert teammate.get(path).status_code == 200
+    assert owner.post(path, json={"user_id": user_id}).status_code == 409
+    assert owner.patch(member_path, json={"active": False}).status_code == 200
+    assert teammate.get(path).status_code == 404
+    assert teammate.get("/v1/workspaces").json()["items"] == []
+    assert teammate.get("/v1/me").json()["id"] == user_id
+    assert owner.post(path, json={"user_id": user_id}).status_code == 409
+    restored = owner.patch(member_path, json={"active": True, "role": "support"})
+    assert restored.status_code == 200 and restored.json()["id"] == added.json()["id"]
+    assert teammate.get(path).status_code == 200
+
+
+@pytest.mark.parametrize("role", ["viewer", "support", "admin"])
+def test_only_owners_manage_memberships_even_when_signed_jwt_claims_owner(actors, role):
+    owner, teammate, outsider = actors("owner"), actors("teammate"), actors("outsider")
+    wid = workspace(owner, "Role matrix")
+    path = f"/v1/workspaces/{wid}/memberships"
+    user_id = teammate.get("/v1/me").json()["id"]
+    other_id = outsider.get("/v1/me").json()["id"]
+    added = owner.post(path, json={"user_id": user_id, "role": role}).json()
+    assert teammate.get(path).status_code == 200
+    assert teammate.post(path, json={"user_id": other_id}).status_code == 403
+    assert teammate.patch(f"{path}/{added['id']}", json={"role": "owner"}).status_code == 403
+    assert outsider.patch(f"{path}/{added['id']}", json={"active": False}).status_code == 404
+    result = teammate.post(
+        f"/v1/workspaces/{wid}/customers", json={"name": "Test", "external_id": "new"}
+    )
+    assert result.status_code == (403 if role == "viewer" else 201)
+    result = teammate.post(
+        f"/v1/workspaces/{wid}/integrations", json={"name": "Test", "kind": "demo"}
+    )
+    assert result.status_code == (201 if role == "admin" else 403)
+
+
+def test_membership_changes_are_scoped_and_validate_explicit_values(actors, db_session):
+    owner, teammate = actors("owner"), actors("teammate")
+    a, b = workspace(owner, "A"), workspace(teammate, "B")
+    path = f"/v1/workspaces/{a}/memberships"
+    other_member = teammate.get(f"/v1/workspaces/{b}/memberships").json()["items"][0]
+    assert owner.patch(f"{path}/{other_member['id']}", json={"active": False}).status_code == 404
+    assert owner.post(path, json={"user_id": str(uuid4())}).status_code == 404
+    foreign_user = User(auth_issuer="https://other.invalid", auth_subject="foreign")
+    db_session.add(foreign_user)
+    db_session.flush()
+    assert owner.post(path, json={"user_id": str(foreign_user.id)}).status_code == 404
+    owner_member = owner.get(path).json()["items"][0]
+    for change in (
+        {},
+        {"active": None},
+        {"role": None},
+        {"active": "false"},
+        {"user_id": str(uuid4())},
+        {"role": "superadmin"},
+    ):
+        assert owner.patch(f"{path}/{owner_member['id']}", json=change).status_code == 422
+    assert (
+        owner.post(path, json={"user_id": other_member["user_id"], "workspace_id": b}).status_code
+        == 422
+    )
+
+
+def test_last_active_owner_cannot_be_demoted_or_removed_and_transfer_is_possible(actors):
+    first, second = actors("first"), actors("second")
+    wid = workspace(first, "Ownership")
+    path = f"/v1/workspaces/{wid}/memberships"
+    first_member = first.get(path).json()["items"][0]
+    first_path = f"{path}/{first_member['id']}"
+    assert first.patch(first_path, json={"role": "viewer"}).status_code == 409
+    assert first.patch(first_path, json={"active": False}).status_code == 409
+    second_id = second.get("/v1/me").json()["id"]
+    second_member = first.post(path, json={"user_id": second_id, "role": "owner"}).json()
+    assert first.patch(first_path, json={"role": "viewer"}).status_code == 200
+    assert first.patch(first_path, json={"role": "owner"}).status_code == 403
+    assert second.patch(f"{path}/{second_member['id']}", json={"active": False}).status_code == 409
+    assert second.patch(first_path, json={"role": "owner"}).status_code == 200
+
+
+def test_revocation_blocks_populated_investigations_and_evidence_with_existing_jwt(
+    actors, db_session
+):
+    owner, teammate = actors("owner"), actors("teammate")
+    wid = workspace(owner, "Evidence isolation")
+    cid = customer(owner, wid)
+    iid = investigation(owner, wid, cid)
+    db_session.add(
+        Evidence(
+            workspace_id=UUID(wid),
+            investigation_id=UUID(iid),
+            kind=EvidenceKind.CONFIG,
+            title="Private flag",
+            source_ref="demo/private/config",
+            excerpt_redacted="disabled",
+            observed_at=datetime.now(UTC),
+        )
+    )
+    db_session.commit()
+    user_id = teammate.get("/v1/me").json()["id"]
+    path = f"/v1/workspaces/{wid}/memberships"
+    member = owner.post(path, json={"user_id": user_id}).json()
+    evidence_path = f"/v1/workspaces/{wid}/investigations/{iid}/evidence"
+    assert len(teammate.get(evidence_path).json()["items"]) == 1
+    assert owner.patch(f"{path}/{member['id']}", json={"active": False}).status_code == 200
+    for resource in (
+        "memberships",
+        "customers",
+        "integrations",
+        "investigations",
+        f"investigations/{iid}",
+        f"investigations/{iid}/jobs",
+        f"investigations/{iid}/tool-calls",
+        f"investigations/{iid}/evidence",
+        f"investigations/{iid}/report",
+    ):
+        response = teammate.get(f"/v1/workspaces/{wid}/{resource}")
+        assert response.status_code == 404 and "Private flag" not in response.text
+
+
 def test_investigation_and_job_are_persisted_atomically_with_both_scopes(actors, db_session):
     alice = actors("alice")
     wid = workspace(alice, "Acme SaaS")

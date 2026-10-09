@@ -6,7 +6,7 @@ PostgreSQL tests exercise the frozen migration's upgrade, drift check, downgrade
 
 See [database/API testing](../docs/database-api.md#testing) for native Postgres or the optional pinned Docker service. With that variable set, run `pnpm run check`. Without it, local database tests skip; CI requires and provides its own service. The startup smoke check uses real HTTP requests on unused ports.
 
-Browser tests now cover Neon SDK signup/login against a loopback provider and reporting-lab reproduction, reset, and CSV download. Demo tests cover five scenarios, scoped exports/logs, read-only key enforcement, and evaluator separation. Next coverage should focus on the FaultBrief worker, bounded diagnostic orchestration, real provider sign-in, and the investigation dashboard.
+Browser tests cover Neon SDK signup/login/password recovery and workspace team controls against a loopback provider and reporting-lab reproduction, reset, and CSV download. PostgreSQL tests verify owner-only role changes, cross-workspace membership scoping, revocation with existing JWTs, and concurrent last-owner protection. Demo tests cover five scenarios, scoped exports/logs, read-only key enforcement, and evaluator separation. Next coverage should focus on the FaultBrief worker, bounded diagnostic orchestration, real provider sign-in, and the investigation dashboard.
 
 ## Manual API checks
 

@@ -1,14 +1,14 @@
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from .auth import Principal
 from .domain import MembershipRole
-from .models import Evidence, Investigation, Membership, Report, ReportCitation, User
-from .schemas import ReportDraft
+from .models import Evidence, Investigation, Membership, Report, ReportCitation, User, Workspace
+from .schemas import MembershipUpdate, ReportDraft
 
 
 def provision_user(session: Session, principal: Principal) -> User:
@@ -37,6 +37,7 @@ def workspace_membership(session: Session, principal: Principal, workspace_id: U
             User.auth_issuer == principal.issuer,
             User.auth_subject == principal.subject,
         )
+        .execution_options(populate_existing=True)
     )
     if membership is None:
         raise HTTPException(404, "Workspace not found.")
@@ -46,6 +47,39 @@ def workspace_membership(session: Session, principal: Principal, workspace_id: U
 def require_writer(membership: Membership) -> None:
     if membership.role not in {MembershipRole.OWNER, MembershipRole.ADMIN, MembershipRole.SUPPORT}:
         raise HTTPException(403, "This workspace role cannot create investigations or resources.")
+
+
+def require_owner_workspace(session: Session, principal: Principal, workspace_id: UUID) -> None:
+    """Serialize membership writes, then recheck the actor under the workspace lock."""
+    membership = workspace_membership(session, principal, workspace_id)
+    if membership.role != MembershipRole.OWNER:
+        raise HTTPException(403, "Only workspace owners can manage memberships.")
+    session.scalar(select(Workspace).where(Workspace.id == workspace_id).with_for_update())
+    membership = workspace_membership(session, principal, workspace_id)
+    if membership.role != MembershipRole.OWNER:
+        raise HTTPException(403, "Only workspace owners can manage memberships.")
+
+
+def update_membership(session: Session, membership: Membership, body: MembershipUpdate) -> None:
+    """Caller holds the workspace lock; retain inactive rows for historical references."""
+    next_role = body.role if body.role is not None else membership.role
+    next_active = body.active if body.active is not None else membership.active
+    if membership.active and membership.role == MembershipRole.OWNER:
+        if not next_active or next_role != MembershipRole.OWNER:
+            other_owners = session.scalar(
+                select(func.count())
+                .select_from(Membership)
+                .where(
+                    Membership.workspace_id == membership.workspace_id,
+                    Membership.id != membership.id,
+                    Membership.role == MembershipRole.OWNER,
+                    Membership.active.is_(True),
+                )
+            )
+            if not other_owners:
+                raise HTTPException(409, "A workspace must keep at least one active owner.")
+    membership.role = next_role
+    membership.active = next_active
 
 
 def scoped_investigation(

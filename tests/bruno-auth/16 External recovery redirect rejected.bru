@@ -1,0 +1,32 @@
+meta {
+  name: 16 External recovery redirect rejected
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{frontend_url}}/api/auth/request-password-reset
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: {{frontend_url}}
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "redirectTo": "https://untrusted.example/reset"
+  }
+}
+
+tests {
+  test("HTTP 400", function () { expect(res.getStatus()).to.equal(400); });
+}
+
+docs {
+  Recovery redirects must use the application's reset page.
+  Expected HTTP 400. Run sequentially; use development test accounts only.
+}

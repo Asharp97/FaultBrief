@@ -1,0 +1,36 @@
+meta {
+  name: 12 Used reset token rejected
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{frontend_url}}/api/auth/reset-password
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: {{frontend_url}}
+}
+
+body:json {
+  {
+    "token": "{{reset_token}}",
+    "newPassword": "{{new_password}}"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_password_recovery")) !== "true") bru.runner.skipRequest();
+}
+
+tests {
+  test("HTTP 400", function () { expect(res.getStatus()).to.equal(400); });
+}
+
+docs {
+  Run after 09. A reset token must not be usable twice.
+  Expected HTTP 400. Run sequentially; use development test accounts only.
+}

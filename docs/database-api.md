@@ -51,6 +51,8 @@ See [the exported OpenAPI contract](api/openapi.json), or start the backend and 
 | `GET /v1/me`                                                              | Provision/read the application identity from a verified token. |
 | `POST /v1/workspaces`                                                     | Create a workspace and its owner membership atomically.        |
 | `GET /v1/workspaces`                                                      | List only the caller's active workspaces.                      |
+| `POST /v1/workspaces/{workspace_id}/memberships`                          | Owner adds an existing account with a local role.              |
+| `PATCH /v1/workspaces/{workspace_id}/memberships/{membership_id}`         | Owner changes role or active flag; protects the last owner.    |
 | `GET /v1/workspaces/{workspace_id}/memberships`                           | Read the workspace roster.                                     |
 | `GET, POST /v1/workspaces/{workspace_id}/customers`                       | List/create affected accounts.                                 |
 | `GET /v1/workspaces/{workspace_id}/customers/{customer_id}`               | Read a same-workspace account.                                 |

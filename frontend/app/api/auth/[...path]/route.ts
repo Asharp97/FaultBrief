@@ -5,7 +5,14 @@ export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path: string[] }> };
 const allowed = {
   GET: new Set(["get-session", "token", "verify-email"]),
-  POST: new Set(["sign-in/email", "sign-up/email", "sign-out", "send-verification-email"]),
+  POST: new Set([
+    "sign-in/email",
+    "sign-up/email",
+    "sign-out",
+    "send-verification-email",
+    "request-password-reset",
+    "reset-password",
+  ]),
 };
 
 async function handle(request: Request, context: Context, method: "GET" | "POST") {
@@ -15,6 +22,16 @@ async function handle(request: Request, context: Context, method: "GET" | "POST"
     if (!sameOrigin(request)) return apiError("Origin not allowed.", 403);
     if ((await request.clone().arrayBuffer()).byteLength > 16384)
       return apiError("Request too large.", 413);
+    if (path === "request-password-reset") {
+      try {
+        const body = await request.clone().json();
+        const origin = request.headers.get("origin");
+        if (body?.redirectTo !== `${origin}/auth/reset-password`)
+          return apiError("Use the application's password reset page.", 400);
+      } catch {
+        return apiError("Invalid request body.", 400);
+      }
+    }
   }
   try {
     const auth = getAuth();

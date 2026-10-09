@@ -1,0 +1,33 @@
+meta {
+  name: 11 Sign out recovered account
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{frontend_url}}/api/auth/sign-out
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: {{frontend_url}}
+}
+
+body:json {
+  {}
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_password_recovery")) !== "true") bru.runner.skipRequest();
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+}
+
+docs {
+  Clears the newly created cookie session.
+  Expected HTTP 200. Run sequentially; use development test accounts only.
+}

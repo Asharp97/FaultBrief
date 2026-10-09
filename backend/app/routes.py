@@ -34,7 +34,9 @@ from .schemas import (
     InvestigationCreate,
     InvestigationRead,
     JobRead,
+    MembershipCreate,
     MembershipRead,
+    MembershipUpdate,
     Page,
     ReportRead,
     ToolCallRead,
@@ -42,7 +44,14 @@ from .schemas import (
     WorkspaceCreate,
     WorkspaceRead,
 )
-from .services import provision_user, require_writer, scoped_investigation, workspace_membership
+from .services import (
+    provision_user,
+    require_owner_workspace,
+    require_writer,
+    scoped_investigation,
+    update_membership,
+    workspace_membership,
+)
 
 router = APIRouter(
     prefix="/v1",
@@ -113,6 +122,59 @@ def list_memberships(
         limit,
         offset,
     )
+
+
+@router.post(
+    "/workspaces/{workspace_id}/memberships",
+    response_model=MembershipRead,
+    status_code=201,
+    tags=["workspaces"],
+)
+def create_membership(workspace_id: UUID, body: MembershipCreate, principal: Identity, session: DB):
+    require_owner_workspace(session, principal, workspace_id)
+    user = session.scalar(
+        select(User).where(User.id == body.user_id, User.auth_issuer == principal.issuer)
+    )
+    if user is None:
+        raise HTTPException(404, "Account not found. Ask the teammate to sign in first.")
+    existing = session.scalar(
+        select(Membership).where(
+            Membership.workspace_id == workspace_id, Membership.user_id == user.id
+        )
+    )
+    if existing is not None:
+        raise HTTPException(
+            409, "Membership already exists. Update it to change or restore access."
+        )
+    membership = Membership(workspace_id=workspace_id, user_id=user.id, role=body.role)
+    session.add(membership)
+    session.commit()
+    return membership
+
+
+@router.patch(
+    "/workspaces/{workspace_id}/memberships/{membership_id}",
+    response_model=MembershipRead,
+    tags=["workspaces"],
+)
+def change_membership(
+    workspace_id: UUID,
+    membership_id: UUID,
+    body: MembershipUpdate,
+    principal: Identity,
+    session: DB,
+):
+    require_owner_workspace(session, principal, workspace_id)
+    membership = session.scalar(
+        select(Membership).where(
+            Membership.id == membership_id, Membership.workspace_id == workspace_id
+        )
+    )
+    if membership is None:
+        raise HTTPException(404, "Membership not found.")
+    update_membership(session, membership, body)
+    session.commit()
+    return membership
 
 
 @router.post(

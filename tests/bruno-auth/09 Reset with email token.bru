@@ -1,0 +1,37 @@
+meta {
+  name: 09 Reset with email token
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{frontend_url}}/api/auth/reset-password
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: {{frontend_url}}
+}
+
+body:json {
+  {
+    "token": "{{reset_token}}",
+    "newPassword": "{{new_password}}"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_password_recovery")) !== "true") bru.runner.skipRequest();
+  if (String(bru.getEnvVar("run_password_recovery")) === "true") { ["reset_token", "new_password"].forEach(function (name) { const value = bru.getEnvVar(name); if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) throw new Error("Set " + name + " in ignored .env from your recovery email before running 09."); }); }
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+}
+
+docs {
+  Changes your test account password. Set AUTH_RESET_TOKEN from the email link and AUTH_TEST_NEW_PASSWORD in ignored .env first.
+  Expected HTTP 200. Run sequentially; use development test accounts only.
+}

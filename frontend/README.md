@@ -1,6 +1,6 @@
 # FaultBrief frontend
 
-Next.js App Router application with a prerendered Tailwind/GSAP marketing homepage and Neon SDK signup/login, a protected workspace page, and server-side API proxies. The paper/teal visual direction and reduced-motion support carry into the account screens.
+Next.js App Router application with a prerendered Tailwind/GSAP marketing homepage and Neon SDK signup/login and password recovery, a protected workspace page with owner-controlled team access, and server-side API proxies. The paper/teal visual direction and reduced-motion support carry into the account screens.
 
 From the repository root, run `pnpm run setup`, `pnpm run auth:configure`, and `pnpm run dev`. Follow [the complete sign-in walkthrough](../docs/authentication.md) for Neon trusted origins, verification, and test accounts.
 
