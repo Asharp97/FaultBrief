@@ -1,0 +1,32 @@
+meta {
+  name: 14 Invalid reset token rejected
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{frontend_url}}/api/auth/reset-password
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: {{frontend_url}}
+}
+
+body:json {
+  {
+    "token": "invalid-bruno-reset-token",
+    "newPassword": "synthetic-password-for-invalid-token"
+  }
+}
+
+tests {
+  test("HTTP 400", function () { expect(res.getStatus()).to.equal(400); });
+}
+
+docs {
+  Invalid tokens cannot change a password.
+  Expected HTTP 400. Run sequentially; use development test accounts only.
+}

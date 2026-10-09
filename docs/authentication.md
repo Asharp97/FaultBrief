@@ -1,4 +1,4 @@
-# Signup, login, and API access
+# Authentication and workspace access
 
 Neon Auth manages passwords, verification, and sessions. The browser calls the Neon SDK through the Next.js `/api/auth/*` proxy. FastAPI verifies the resulting JWT and checks local workspace membership. We added provider proxy routes; we did not build a second password system in FastAPI.
 
@@ -15,18 +15,45 @@ Neon Auth manages passwords, verification, and sessions. The browser calls the N
 
 The [official Neon Next.js guide](https://neon.com/docs/auth/quick-start/nextjs) describes this SDK integration and provider configuration. Email delivery and verification policy are controlled by Neon.
 
+## Recover a password
+
+1. On the sign-in page, choose **Forgot your password?** (or visit `/auth/forgot-password`). Enter your own test account email.
+2. The page uses the same confirmation for existing and unknown accounts. Neon sends the email; FaultBrief does not store a recovery token or send its own password emails.
+3. Follow the email link to `/auth/reset-password`, enter a new password twice, and select **Update password**. Sign in with that password afterward.
+4. Missing, invalid, expired, or already-used links cannot update a password. Request another link if needed. The page removes the token from the address bar, keeps it only in memory, and uses a no-referrer policy. Refreshing this page requires reopening the email link.
+
+The frontend accepts recovery redirects only to its own reset page. Your deployed origin must be trusted in Neon. Confirm recovery-email delivery with your development account; automated tests use a synthetic mailbox. The SDK follows the [Better Auth recovery contract](https://www.better-auth.com/docs/authentication/email-password#request-password-reset). Neon controls token expiry, email delivery, and provider session revocation; the SDK proxy cannot set the managed provider's server-side policy. Copied API JWTs can remain valid until expiry.
+
+## Add teammates and manage roles
+
+1. Each teammate signs up and signs in, opens their dashboard, and selects **Copy my user ID**. This copies their local FaultBrief identity UUID.
+2. The workspace owner chooses **View team for …**, enters the teammate's user ID, chooses a starting role, and selects **Add teammate**. The account must already be provisioned through the dashboard or `GET /v1/me` in the same authentication provider.
+3. The owner can **Save role**, **Deactivate**, or **Reactivate** a membership. This is direct access provisioning for known teammates; email invitations and an account directory are future features.
+4. To transfer ownership, first promote another teammate to owner, then demote the previous owner. The API rejects any change that would remove the last active owner, including concurrent requests.
+
+| Role    | Read workspace data / leave feedback | Create customers and investigations | Configure integrations | Manage teammates |
+| ------- | ------------------------------------ | ----------------------------------- | ---------------------- | ---------------- |
+| Owner   | Yes                                  | Yes                                 | Yes                    | Yes              |
+| Admin   | Yes                                  | Yes                                 | Yes                    | No               |
+| Support | Yes                                  | Yes                                 | No                     | No               |
+| Viewer  | Yes                                  | No                                  | No                     | No               |
+
+Membership creation uses `POST /v1/workspaces/{workspace_id}/memberships`; changes use `PATCH /v1/workspaces/{workspace_id}/memberships/{membership_id}`. The dashboard calls the matching `/api/faultbrief/workspaces/…` proxy, including same-origin checks on PATCH. Every protected backend request reads current membership from PostgreSQL. Deactivation immediately prevents that workspace's reads and writes even if the user still has a valid JWT; it does not sign them out of other workspaces. Inactive rows preserve investigation/feedback history and can be reactivated; duplicate creation returns 409. No migration is needed for these operations because the existing membership table already stores roles and active flags.
+
 ## What calls what
 
-| Operation                 | Browser / Bruno route on the frontend  | Owner                                      |
-| ------------------------- | -------------------------------------- | ------------------------------------------ |
-| Create account            | `POST /api/auth/sign-up/email`         | Neon SDK → Neon Auth                       |
-| Sign in                   | `POST /api/auth/sign-in/email`         | Neon SDK → Neon Auth                       |
-| Read session              | `GET /api/auth/get-session`            | Neon SDK, signed HTTP-only session cache   |
-| Obtain JWT                | `GET /api/auth/token`                  | Neon Auth                                  |
-| Sign out                  | `POST /api/auth/sign-out`              | Neon SDK → Neon Auth, cookie clearing      |
-| Verify email              | `GET /api/auth/verify-email`           | Neon Auth email link                       |
-| Read application identity | `GET /api/faultbrief/me`               | Next.js sends JWT to FastAPI `GET /v1/me`  |
-| Company workspaces        | `GET, POST /api/faultbrief/workspaces` | Next.js sends JWT to FastAPI workspace API |
+| Operation                 | Browser / Bruno route on the frontend   | Owner                                      |
+| ------------------------- | --------------------------------------- | ------------------------------------------ |
+| Create account            | `POST /api/auth/sign-up/email`          | Neon SDK → Neon Auth                       |
+| Sign in                   | `POST /api/auth/sign-in/email`          | Neon SDK → Neon Auth                       |
+| Read session              | `GET /api/auth/get-session`             | Neon SDK, signed HTTP-only session cache   |
+| Obtain JWT                | `GET /api/auth/token`                   | Neon Auth                                  |
+| Sign out                  | `POST /api/auth/sign-out`               | Neon SDK → Neon Auth, cookie clearing      |
+| Request recovery link     | `POST /api/auth/request-password-reset` | Neon Auth email delivery                   |
+| Reset password            | `POST /api/auth/reset-password`         | Neon Auth validates the one-time token     |
+| Verify email              | `GET /api/auth/verify-email`            | Neon Auth email link                       |
+| Read application identity | `GET /api/faultbrief/me`                | Next.js sends JWT to FastAPI `GET /v1/me`  |
+| Company workspaces        | `GET, POST /api/faultbrief/workspaces`  | Next.js sends JWT to FastAPI workspace API |
 
 The FastAPI Swagger document describes `/v1/*`; it does not list the separate Next.js provider proxy routes. Auth proxy operations are allowlisted; provider admin APIs are not exposed. POSTs require a matching browser Origin. API destinations come from server configuration, not user-supplied URLs. Workspace roles stay authoritative in PostgreSQL, not in browser forms or JWT role claims.
 
@@ -52,6 +79,6 @@ pnpm run frontend:e2e
 pnpm run check
 ```
 
-The browser tests run the real Neon SDK against a loopback provider/API double with synthetic credentials. They cover signup, invalid and valid sign-in, email-verification-required behavior, HTTP-only cookies, protected pages, authenticated workspace creation, cross-origin rejection, and sign-out. Existing backend tests exercise real signed JWT verification and PostgreSQL permissions. Neither automated suite creates real Neon users. Complete steps 5–8 with your own test account to validate live provider settings and email delivery.
+The browser tests run the real Neon SDK against a loopback provider/API double with synthetic credentials. They cover signup, invalid and valid sign-in, email-verification-required behavior, HTTP-only cookies, protected pages, authenticated workspace creation, cross-origin rejection, password recovery, teammate provisioning, role changes, last-owner protection, revocation, and sign-out. Existing backend tests exercise real signed JWT verification and PostgreSQL permissions. Neither automated suite creates real Neon users. Complete signup/sign-in and the recovery walkthrough with your own test account to validate live provider settings and email delivery. PostgreSQL tests also exercise simultaneous owner removals on independent connections.
 
 Browser test artifacts are ignored. CI installs Chromium and runs the same browser checks without Neon credentials. The tests restore Next.js-generated type configuration after their temporary server stops.

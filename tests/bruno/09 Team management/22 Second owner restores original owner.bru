@@ -1,0 +1,46 @@
+meta {
+  name: 22 Second owner restores original owner
+  type: http
+  seq: 22
+}
+
+patch {
+  url: {{base_url}}/v1/workspaces/{{workspace_a_id}}/memberships/{{team_owner_membership_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_b}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "role": "owner"
+  }
+}
+
+script:pre-request {
+  ["token_b","workspace_a_id","workspace_b_id","user_a_id","user_b_id","team_owner_membership_id","team_membership_id"].forEach(function (name) {
+    const value = bru.getVar(name) || bru.getEnvVar(name);
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) throw new Error("Missing " + name + ". Run folders 01–06 and earlier team requests first.");
+  });
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Response and access contract", function () {
+    const item = res.getBody();
+    expect(item.workspace_id).to.equal(bru.getVar("workspace_a_id"));
+    expect(item.role).to.equal("owner");
+  });
+}
+
+docs {
+  Second owner restores original owner. Use only the synthetic A/B workspaces created in folders 03–04. This sequence changes user B's access to A, then revokes it again.
+  Expected HTTP 200. Run sequentially; use development test accounts only.
+}

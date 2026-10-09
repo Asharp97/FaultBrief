@@ -1,0 +1,36 @@
+meta {
+  name: 08 Request recovery email
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{frontend_url}}/api/auth/request-password-reset
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: {{frontend_url}}
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "redirectTo": "{{frontend_url}}/auth/reset-password"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_password_recovery")) !== "true") bru.runner.skipRequest();
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+}
+
+docs {
+  Request a recovery email for your own disposable test account. Run this by itself, then obtain the token from your email before 09.
+  Expected HTTP 200. Run sequentially; use development test accounts only.
+}

@@ -600,5 +600,215 @@
     "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
     "expected_status": 409,
     "optional": "run_viewer_tests"
+  },
+  {
+    "file": "09 Team management/01 Capture owner membership.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/02 Outsider cannot change owner.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/03 Cannot deactivate final owner.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 409,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/04 Cannot demote final owner.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 409,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/05 Add teammate as viewer.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 201,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/06 Teammate can read roster.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/07 Viewer cannot promote self.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 403,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/08 Viewer cannot add teammates.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 403,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/09 Duplicate membership rejected.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 409,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/10 Empty update rejected.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/11 Null active flag rejected.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/12 String active flag rejected.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/13 Forged workspace rejected.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/14 Change teammate to support.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/15 Support cannot configure integrations.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/integrations",
+    "expected_status": 403,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/16 Change teammate to admin.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/17 Admin cannot manage memberships.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 403,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/18 Promote second owner.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/19 Second owner can demote first.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/20 Demoted owner cannot restore self.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 403,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/21 Second owner cannot remove final owner.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 409,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/22 Second owner restores original owner.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/23 Owner revokes teammate access.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/24 Revoked JWT cannot read evidence.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/evidence",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/25 Revoked JWT cannot read investigation.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/26 Revoked teammate cannot change owner.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/27 Reactivate same membership as viewer.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/28 Restored viewer cannot create customer.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 403,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/29 Revoke teammate after test.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "09 Team management/30 Membership ID cannot cross workspaces.bru",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{workspace_id}/memberships/{membership_id}",
+    "expected_status": 404,
+    "optional": null
   }
 ]

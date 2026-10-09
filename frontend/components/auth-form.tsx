@@ -107,6 +107,11 @@ export function AuthForm({
             {busy ? "Please wait…" : signup ? "Create account" : "Sign in"}
           </button>
         </form>
+        {!signup && (
+          <Link className="account-link" href="/auth/forgot-password">
+            Forgot your password?
+          </Link>
+        )}
         {message && (
           <p className="account-notice" role="status">
             {message}

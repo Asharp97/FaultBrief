@@ -1,0 +1,31 @@
+meta {
+  name: 15 Missing Origin rejected
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{frontend_url}}/api/auth/request-password-reset
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "redirectTo": "{{frontend_url}}/auth/reset-password"
+  }
+}
+
+tests {
+  test("HTTP 403", function () { expect(res.getStatus()).to.equal(403); });
+}
+
+docs {
+  The frontend rejects this before contacting the email provider.
+  Expected HTTP 403. Run sequentially; use development test accounts only.
+}

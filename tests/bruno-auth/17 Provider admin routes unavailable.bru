@@ -1,0 +1,20 @@
+meta {
+  name: 17 Provider admin routes unavailable
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{frontend_url}}/api/auth/admin/list-users
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 404", function () { expect(res.getStatus()).to.equal(404); });
+}
+
+docs {
+  The frontend never exposes the provider's admin operations.
+  Expected HTTP 404. Run sequentially; use development test accounts only.
+}

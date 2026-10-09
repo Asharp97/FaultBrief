@@ -1,0 +1,20 @@
+meta {
+  name: 18 JWT denied without session
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{frontend_url}}/api/auth/token
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 401", function () { expect(res.getStatus()).to.equal(401); });
+}
+
+docs {
+  Run after sign-out. Anonymous access cannot obtain a signed-in API JWT.
+  Expected HTTP 401. Run sequentially; use development test accounts only.
+}
