@@ -1,0 +1,46 @@
+meta {
+  name: 10 User B cannot read A tool calls
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_a_id}}/investigations/{{investigation_a_id}}/tool-calls
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_b}}
+}
+
+script:pre-request {
+  ["workspace_a_id","investigation_a_id","token_b"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(404);
+    const body = res.getBody();
+    expect(body).to.have.all.keys("detail");
+    expect(body.detail).to.be.a("string").that.is.not.empty;
+    
+    expect(body.detail).to.equal("Workspace not found.");
+  });
+}
+
+docs {
+  User B cannot read A tool calls.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 404 — Workspace not found..
+}
+

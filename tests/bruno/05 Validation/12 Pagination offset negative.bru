@@ -1,0 +1,45 @@
+meta {
+  name: 12 Pagination offset negative
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_a_id}}/customers?offset=-1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+script:pre-request {
+  ["workspace_a_id","token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 422", function () {
+    expect(res.getStatus()).to.equal(422);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(422);
+    const body = res.getBody();
+    expect(body.detail).to.be.an("array").that.is.not.empty;
+    
+    expect(body.detail.some(function (error) { return error.loc.includes("offset"); })).to.equal(true);
+  });
+}
+
+docs {
+  Pagination offset negative.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 422.
+}
+

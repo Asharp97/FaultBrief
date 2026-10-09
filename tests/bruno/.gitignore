@@ -1,0 +1,4 @@
+# Bruno exports/reports can contain headers, tokens, and response data.
+results/
+*.local.bru
+*.local.json

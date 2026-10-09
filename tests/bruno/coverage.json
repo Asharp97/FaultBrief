@@ -1,0 +1,604 @@
+[
+  {
+    "file": "01 Readiness/01 API health and new run.bru",
+    "method": "GET",
+    "path": "/health",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "01 Readiness/02 OpenAPI contract.bru",
+    "method": "GET",
+    "path": "/openapi.json",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "01 Readiness/03 Swagger docs.bru",
+    "method": "GET",
+    "path": "/docs",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "01 Readiness/04 ReDoc docs.bru",
+    "method": "GET",
+    "path": "/redoc",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "01 Readiness/05 Demo health.bru",
+    "method": "GET",
+    "path": "/health",
+    "expected_status": 200,
+    "optional": "run_demo_health"
+  },
+  {
+    "file": "02 Identity/01 User A identity.bru",
+    "method": "GET",
+    "path": "/v1/me",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "02 Identity/02 User A identity is stable.bru",
+    "method": "GET",
+    "path": "/v1/me",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "02 Identity/03 User B identity is different.bru",
+    "method": "GET",
+    "path": "/v1/me",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "02 Identity/04 Missing bearer token.bru",
+    "method": "GET",
+    "path": "/v1/me",
+    "expected_status": 401,
+    "optional": null
+  },
+  {
+    "file": "02 Identity/05 Malformed bearer token.bru",
+    "method": "GET",
+    "path": "/v1/me",
+    "expected_status": 401,
+    "optional": null
+  },
+  {
+    "file": "02 Identity/06 Optional viewer identity.bru",
+    "method": "GET",
+    "path": "/v1/me",
+    "expected_status": 200,
+    "optional": "run_viewer_tests"
+  },
+  {
+    "file": "03 Company A setup/01 Create workspace A.bru",
+    "method": "POST",
+    "path": "/v1/workspaces",
+    "expected_status": 201,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/02 List user A workspaces.bru",
+    "method": "GET",
+    "path": "/v1/workspaces",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/03 Owner membership.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/04 Create affected customer A.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 201,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/05 List affected customers.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/06 Read affected customer.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers/{customer_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/07 Create integration metadata.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/integrations",
+    "expected_status": 201,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/08 List integrations.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/integrations",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/09 Queue investigation A.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 201,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/10 List investigations.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/11 Read queued investigation.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/12 Exactly one queued job.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/jobs",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/13 No tool calls yet.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/tool-calls",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/14 No evidence yet.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/evidence",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/15 Report not generated yet.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/report",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "03 Company A setup/16 Feedback needs an existing report.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "04 Company B setup/01 Create workspace B.bru",
+    "method": "POST",
+    "path": "/v1/workspaces",
+    "expected_status": 201,
+    "optional": null
+  },
+  {
+    "file": "04 Company B setup/02 Same external ID in company B.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 201,
+    "optional": null
+  },
+  {
+    "file": "04 Company B setup/03 Queue investigation B.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 201,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/01 Empty workspace name.bru",
+    "method": "POST",
+    "path": "/v1/workspaces",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/02 Reject forged workspace owner.bru",
+    "method": "POST",
+    "path": "/v1/workspaces",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/03 Customer missing external ID.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/04 Duplicate customer in same company.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 409,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/05 Unsupported integration kind.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/integrations",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/06 Integration secrets are not accepted.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/integrations",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/07 Investigation question too short.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/08 Reject forged investigation state.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/09 Reject forged investigation author.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/10 Malformed customer UUID.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers/{customer_id}",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/11 Pagination limit too high.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/12 Pagination offset negative.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/13 Unsupported feedback rating.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/14 Reject forged feedback author.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 422,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/15 Pagination valid boundary.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/16 Rejected writes left customers unchanged.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/17 Rejected writes left cases unchanged.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "05 Validation/18 Rejected writes left integrations unchanged.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/integrations",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/01 User A only lists permitted workspaces.bru",
+    "method": "GET",
+    "path": "/v1/workspaces",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/02 User B only lists permitted workspaces.bru",
+    "method": "GET",
+    "path": "/v1/workspaces",
+    "expected_status": 200,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/03 User B cannot read A memberships.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/04 User B cannot read A customers.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/05 User B cannot read A customer detail.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers/{customer_id}",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/06 User B cannot read A integrations.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/integrations",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/07 User B cannot read A investigations.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/08 User B cannot read A investigation detail.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/09 User B cannot read A jobs.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/jobs",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/10 User B cannot read A tool calls.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/tool-calls",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/11 User B cannot read A evidence.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/evidence",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/12 User B cannot read A report.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/report",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/13 User A cannot read B customers.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/14 User B cannot create A customer.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/15 User B cannot create A investigation.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/16 User B cannot submit A feedback.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/17 Customer B cannot attach to A case.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/18 Customer B ID under A workspace.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/customers/{customer_id}",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/19 Investigation B ID under A workspace.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "06 Workspace isolation/20 Unknown investigation UUID.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}",
+    "expected_status": 404,
+    "optional": null
+  },
+  {
+    "file": "07 Report fixture/01 Completed synthetic investigation.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}",
+    "expected_status": 200,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/02 Completed fixture job.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/jobs",
+    "expected_status": 200,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/03 Read-only completed tool call.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/tool-calls",
+    "expected_status": 200,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/04 Evidence is scoped and redacted.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/evidence",
+    "expected_status": 200,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/05 Report includes valid citation.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/report",
+    "expected_status": 200,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/06 Owner submits feedback.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 201,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/07 Duplicate feedback rejected.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 409,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/08 User B cannot read populated report.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/report",
+    "expected_status": 404,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/09 User B cannot read populated evidence.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/evidence",
+    "expected_status": 404,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "07 Report fixture/10 Wrong report ID within known case.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 404,
+    "optional": "run_report_fixture"
+  },
+  {
+    "file": "08 Viewer permissions/01 Viewer membership is local.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/memberships",
+    "expected_status": 200,
+    "optional": "run_viewer_tests"
+  },
+  {
+    "file": "08 Viewer permissions/02 Viewer can read investigation.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}",
+    "expected_status": 200,
+    "optional": "run_viewer_tests"
+  },
+  {
+    "file": "08 Viewer permissions/03 Viewer can read report.bru",
+    "method": "GET",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/report",
+    "expected_status": 200,
+    "optional": "run_viewer_tests"
+  },
+  {
+    "file": "08 Viewer permissions/04 Viewer cannot create customer.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/customers",
+    "expected_status": 403,
+    "optional": "run_viewer_tests"
+  },
+  {
+    "file": "08 Viewer permissions/05 Viewer cannot configure integrations.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/integrations",
+    "expected_status": 403,
+    "optional": "run_viewer_tests"
+  },
+  {
+    "file": "08 Viewer permissions/06 Viewer cannot queue investigations.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations",
+    "expected_status": 403,
+    "optional": "run_viewer_tests"
+  },
+  {
+    "file": "08 Viewer permissions/07 Viewer can submit report feedback.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 201,
+    "optional": "run_viewer_tests"
+  },
+  {
+    "file": "08 Viewer permissions/08 Viewer duplicate feedback rejected.bru",
+    "method": "POST",
+    "path": "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/reports/{report_id}/feedback",
+    "expected_status": 409,
+    "optional": "run_viewer_tests"
+  }
+]

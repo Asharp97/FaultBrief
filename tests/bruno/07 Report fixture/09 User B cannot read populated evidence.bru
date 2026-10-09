@@ -1,0 +1,53 @@
+meta {
+  name: 09 User B cannot read populated evidence
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{fixture_workspace_id}}/investigations/{{fixture_investigation_id}}/evidence
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_b}}
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_report_fixture")) !== "true") {
+    bru.runner.skipRequest();
+  } else {
+    ["fixture_workspace_id","fixture_investigation_id","token_b"].forEach(function (name) {
+      const value = (bru.getVar(name) || bru.getEnvVar(name));
+      if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+        throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+      }
+    });
+    
+  }
+  
+}
+
+tests {
+  test("HTTP 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(404);
+    const body = res.getBody();
+    expect(body).to.have.all.keys("detail");
+    expect(body.detail).to.be.a("string").that.is.not.empty;
+    
+    expect(body.detail).to.equal("Workspace not found.");
+  });
+}
+
+docs {
+  User B cannot read populated evidence.
+  
+  Prerequisites: run the fixture helper and set all fixture_* variables in Local.
+  Expected: HTTP 404 — Workspace not found..
+  Skipped unless run_report_fixture=true. See README for setup.
+}
+

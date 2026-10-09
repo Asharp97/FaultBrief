@@ -1,0 +1,64 @@
+meta {
+  name: 05 Viewer cannot configure integrations
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{fixture_workspace_id}}/integrations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_viewer}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Forbidden viewer integration",
+    "kind": "demo"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_viewer_tests")) !== "true") {
+    bru.runner.skipRequest();
+  } else {
+    ["fixture_workspace_id","token_viewer"].forEach(function (name) {
+      const value = (bru.getVar(name) || bru.getEnvVar(name));
+      if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+        throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+      }
+    });
+    
+  }
+  
+}
+
+tests {
+  test("HTTP 403", function () {
+    expect(res.getStatus()).to.equal(403);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(403);
+    const body = res.getBody();
+    expect(body).to.have.all.keys("detail");
+    expect(body.detail).to.be.a("string").that.is.not.empty;
+    
+    expect(body.detail).to.equal("Only workspace administrators can configure integrations.");
+  });
+}
+
+docs {
+  Viewer cannot configure integrations.
+  
+  Prerequisites: viewer provisioned, fixture helper run with viewer user ID, fixture IDs set.
+  Expected: HTTP 403 — Only workspace administrators can configure integrations..
+  Skipped unless run_viewer_tests=true. See README for setup.
+}
+

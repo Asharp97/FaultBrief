@@ -72,6 +72,8 @@ pnpm run format
 
 Use that command to apply the shared JavaScript/CSS/Markdown formatting rules. Python formatting is handled by Ruff; see [the development guide](docs/development.md).
 
+For manual API testing, open [the ordered Bruno collection](tests/bruno/README.md). It covers all current application endpoints and includes setup, validation, workspace isolation, and optional synthetic report/viewer checks.
+
 ## Configuration and data
 
 - Root `.env`: local defaults and optional server configuration.

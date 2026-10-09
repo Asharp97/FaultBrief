@@ -1,0 +1,56 @@
+meta {
+  name: 02 Reject forged workspace owner
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/v1/workspaces
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Invalid ownership",
+    "user_id": "{{user_b_id}}"
+  }
+}
+
+script:pre-request {
+  ["user_b_id","token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 422", function () {
+    expect(res.getStatus()).to.equal(422);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(422);
+    const body = res.getBody();
+    expect(body.detail).to.be.an("array").that.is.not.empty;
+    
+    expect(body.detail.some(function (error) { return error.loc.includes("user_id"); })).to.equal(true);
+  });
+}
+
+docs {
+  Reject forged workspace owner.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 422.
+}
+

@@ -1,0 +1,60 @@
+meta {
+  name: 07 Create integration metadata
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{workspace_a_id}}/integrations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Synthetic demo integration",
+    "kind": "demo"
+  }
+}
+
+script:pre-request {
+  ["workspace_a_id","token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(201);
+    const body = res.getBody();
+    expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    bru.setVar("integration_a_id", body.id);
+    expect(body.workspace_id).to.equal(bru.getVar("workspace_a_id"));
+    expect(body.kind).to.equal("demo");
+    expect(body.enabled).to.equal(false);
+    expect(body).not.to.have.property("secret_ref");
+  });
+}
+
+docs {
+  Create integration metadata.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 201.
+  Creates disabled metadata only; it does not contact a customer system.
+}
+

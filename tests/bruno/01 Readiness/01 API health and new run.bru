@@ -1,0 +1,39 @@
+meta {
+  name: 01 API health and new run
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/health
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  base_url: http://127.0.0.1:8000
+}
+
+script:pre-request {
+  bru.setVar("run_id", Date.now().toString() + "-" + Math.random().toString(36).slice(2,8));
+  ["user_a_id", "user_b_id", "workspace_a_id", "workspace_b_id", "customer_a_id", "customer_b_id", "integration_a_id", "investigation_a_id", "investigation_b_id", "job_a_id"].forEach(function (name) { bru.setVar(name, ""); });
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.deep.equal({status:"ok",service:"faultbrief-api"});
+  });
+}
+
+docs {
+  API health and new run.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 200.
+  Creates a fresh run_id and clears captured core IDs. Run this once at the start, not halfway through a run. Health is liveness only, not DB/Auth readiness.
+}

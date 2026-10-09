@@ -1,0 +1,45 @@
+meta {
+  name: 03 User B identity is different
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/v1/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_b}}
+}
+
+script:pre-request {
+  ["token_b"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    bru.setVar("user_b_id", body.id);
+    expect(body.id, "Use a different test account for user B").not.to.equal(bru.getVar("user_a_id"));
+  });
+}
+
+docs {
+  User B identity is different.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 200.
+}
+

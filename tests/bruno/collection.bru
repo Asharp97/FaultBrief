@@ -1,0 +1,26 @@
+script:pre-request {
+  const base = bru.getEnvVar("base_url");
+  if (!base || (!base.startsWith("http://") && !base.startsWith("https://"))) {
+    throw new Error("Select the Local environment and set base_url to the FaultBrief API.");
+  }
+}
+
+tests {
+  test("No unexpected server error", function () {
+    expect(res.getStatus()).to.be.lessThan(500);
+  });
+  test("Internal authentication and integration fields stay private", function () {
+    const body = res.getBody();
+    function check(value) {
+      if (Array.isArray(value)) { value.forEach(check); return; }
+      if (!value || typeof value !== "object") return;
+      ["auth_issuer", "auth_subject", "secret_ref", "arguments_redacted"].forEach(function (key) {
+        expect(value).not.to.have.property(key);
+      });
+      Object.values(value).forEach(check);
+    }
+    // OpenAPI describes schemas, so inspect responses only, not the contract document.
+    if (!body || !body.openapi) check(body);
+  });
+}
+

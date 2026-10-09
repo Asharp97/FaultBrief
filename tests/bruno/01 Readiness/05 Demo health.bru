@@ -1,0 +1,42 @@
+meta {
+  name: 05 Demo health
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{demo_url}}/health
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_demo_health")) !== "true") {
+    bru.runner.skipRequest();
+  } else {
+    
+    
+  }
+  
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.deep.equal({status:"ok",service:"faultbrief-demo"});
+  });
+}
+
+docs {
+  Demo health.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 200.
+  Skipped unless run_demo_health=true. See README for setup.
+  Set run_demo_health=false only when you deliberately run the backend alone.
+}
+

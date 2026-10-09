@@ -1,0 +1,59 @@
+meta {
+  name: 01 Viewer membership is local
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{fixture_workspace_id}}/memberships
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_viewer}}
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_viewer_tests")) !== "true") {
+    bru.runner.skipRequest();
+  } else {
+    ["fixture_workspace_id","token_viewer"].forEach(function (name) {
+      const value = (bru.getVar(name) || bru.getEnvVar(name));
+      if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+        throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+      }
+    });
+    
+  }
+  
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.items).to.be.an("array");
+    expect(body.limit).to.equal(50);
+    expect(body.offset).to.equal(0);
+    body.items.forEach(function (item) {
+      expect(item.workspace_id).to.equal(bru.getEnvVar("fixture_workspace_id"));
+    });
+    const member = body.items.find(function (item) {return item.user_id === bru.getEnvVar("fixture_viewer_user_id");});
+    expect(member).to.be.an("object");
+    expect(member.role).to.equal("viewer");
+    expect(member.active).to.equal(true);
+  });
+}
+
+docs {
+  Viewer membership is local.
+  
+  Prerequisites: viewer provisioned, fixture helper run with viewer user ID, fixture IDs set.
+  Expected: HTTP 200.
+  Skipped unless run_viewer_tests=true. See README for setup.
+}
+

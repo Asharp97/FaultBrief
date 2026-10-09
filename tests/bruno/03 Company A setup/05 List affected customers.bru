@@ -1,0 +1,50 @@
+meta {
+  name: 05 List affected customers
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_a_id}}/customers
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+script:pre-request {
+  ["workspace_a_id","token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.items).to.be.an("array");
+    expect(body.limit).to.equal(50);
+    expect(body.offset).to.equal(0);
+    body.items.forEach(function (item) {
+      expect(item.workspace_id).to.equal(bru.getVar("workspace_a_id"));
+    });
+    expect(body.items).to.have.length(1);
+    expect(body.items[0].id).to.equal(bru.getVar("customer_a_id"));
+  });
+}
+
+docs {
+  List affected customers.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 200.
+}
+

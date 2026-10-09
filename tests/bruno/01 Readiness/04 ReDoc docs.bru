@@ -1,0 +1,30 @@
+meta {
+  name: 04 ReDoc docs
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/redoc
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.be.a("string").and.include("redoc");
+  });
+}
+
+docs {
+  ReDoc docs.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 200.
+}
+

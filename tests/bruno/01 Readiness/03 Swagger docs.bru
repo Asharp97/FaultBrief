@@ -1,0 +1,30 @@
+meta {
+  name: 03 Swagger docs
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/docs
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.be.a("string").and.include("swagger-ui");
+  });
+}
+
+docs {
+  Swagger docs.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 200.
+}
+

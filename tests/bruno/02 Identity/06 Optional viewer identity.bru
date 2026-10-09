@@ -1,0 +1,54 @@
+meta {
+  name: 06 Optional viewer identity
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/v1/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_viewer}}
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_viewer_tests")) !== "true") {
+    bru.runner.skipRequest();
+  } else {
+    ["token_viewer"].forEach(function (name) {
+      const value = (bru.getVar(name) || bru.getEnvVar(name));
+      if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+        throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+      }
+    });
+    
+  }
+  
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    bru.setVar("user_viewer_id", body.id);
+    expect(body.id).not.to.equal(bru.getVar("user_a_id"));
+    expect(body.id).not.to.equal(bru.getVar("user_b_id"));
+  });
+}
+
+docs {
+  Optional viewer identity.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 200.
+  Skipped unless run_viewer_tests=true. See README for setup.
+  For fixture preparation, enable run_viewer_tests, send only this request, and copy its id. After preparation, run folder 08. A third signed JWT alone does not grant a viewer role.
+}
+

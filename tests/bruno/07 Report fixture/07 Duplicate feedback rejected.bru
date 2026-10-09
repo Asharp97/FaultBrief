@@ -1,0 +1,63 @@
+meta {
+  name: 07 Duplicate feedback rejected
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{fixture_workspace_id}}/investigations/{{fixture_investigation_id}}/reports/{{fixture_report_id}}/feedback
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "rating": "helpful"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_report_fixture")) !== "true") {
+    bru.runner.skipRequest();
+  } else {
+    ["fixture_workspace_id","fixture_investigation_id","fixture_report_id","token_a"].forEach(function (name) {
+      const value = (bru.getVar(name) || bru.getEnvVar(name));
+      if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+        throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+      }
+    });
+    
+  }
+  
+}
+
+tests {
+  test("HTTP 409", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(409);
+    const body = res.getBody();
+    expect(body).to.have.all.keys("detail");
+    expect(body.detail).to.be.a("string").that.is.not.empty;
+    
+    expect(body.detail).to.equal("Resource or relationship conflict.");
+  });
+}
+
+docs {
+  Duplicate feedback rejected.
+  
+  Prerequisites: run the fixture helper and set all fixture_* variables in Local.
+  Expected: HTTP 409 — Resource or relationship conflict..
+  Skipped unless run_report_fixture=true. See README for setup.
+}
+
