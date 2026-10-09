@@ -69,6 +69,8 @@ List responses contain `items`, `limit`, and `offset`. Limit is 1–100; offset 
 
 ## Neon configuration and authentication
 
+Read [the authentication flow and current implementation gaps](authentication.md). FaultBrief verifies Neon JWTs; provider signup/login endpoints are external and the browser sign-in flow is not implemented yet.
+
 `Settings` reads the root `.env` and then `backend/.env`; the later file overrides matching variable names. Process environment values take priority. Use one database naming style when populating files: `DB_URL` or its canonical alias `DATABASE_URL`.
 
 | Setting                                            | Meaning                                                                       |

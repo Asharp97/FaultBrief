@@ -2,6 +2,10 @@
 
 Open this directory as a **collection** in [Bruno](https://www.usebruno.com/), select **Local**, and run numbered folders in order. Each request has a purpose, prerequisites, expected status, and assertions in its Tests tab. Green means the expected behavior passed, including deliberate 401/403/404/409/422 responses.
 
+## Authentication scope
+
+This collection tests FaultBrief's JWT verification and workspace permissions. It does not yet sign users in or obtain JWTs from Neon. See [what is implemented and what is missing](../../docs/authentication.md). Folder 02 tests already-issued tokens; login/signup will be a separate provider-flow milestone.
+
 ## Prepare once
 
 1. From the repository root, run `pnpm run setup` if needed, then `pnpm run db:migrate` against your development database. Keep Neon database/Auth settings in `backend/.env`.
