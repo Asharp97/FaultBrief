@@ -29,7 +29,7 @@ The launcher binds local services to loopback addresses and stops only its own c
 
 Root `.env` supplies defaults; `backend/.env` supplies Neon credentials and overrides matching keys. See [database/API configuration and testing](database-api.md). Blank optional credentials are ignored until their integration exists. `frontend/.env.local` contains public browser values only. Do not place a connection string or provider secret behind a `NEXT_PUBLIC_` prefix.
 
-API CORS explicitly allows the configured frontend origin. This is a browser boundary, not authentication. The scoped API now verifies Neon JWTs and checks active database memberships. Browser sign-in is a separate next step.
+API CORS explicitly allows the configured frontend origin. This is a browser boundary, not authentication. The scoped API now verifies Neon JWTs and checks active database memberships. Browser signup/login uses the Neon SDK and same-origin Next.js proxies; follow [authentication setup](authentication.md). The [Ledger reporting lab](../demo/README.md) supplies repeatable diagnostic cases.
 
 ## Dependency policy
 

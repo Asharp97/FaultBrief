@@ -1,0 +1,35 @@
+meta {
+  name: 16 Diagnostic key cannot reset
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{demo_url}}/lab/runs/{{run_id}}/reset
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{diagnostic_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("HTTP 403", function () { expect(res.getStatus()).to.equal(403); });
+  
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 403.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

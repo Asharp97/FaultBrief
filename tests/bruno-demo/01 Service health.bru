@@ -1,0 +1,26 @@
+meta {
+  name: 01 Service health
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{demo_url}}/health
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Expected behavior", function () {
+    const body=res.getBody();
+    expect(body).to.deep.equal({status:"ok",service:"faultbrief-demo"});
+  });
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 200.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

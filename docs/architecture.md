@@ -14,7 +14,7 @@ flowchart TD
     Web --> Samples["Prepared synthetic investigation playback"]
 ```
 
-The marketing samples are local UI playback. The API verifies JWT identity and workspace membership, persists scoped customer/case/job records in Neon, and exposes typed evidence/report/feedback contracts. The demo service exposes liveness only. Browser sign-in, diagnostic tools, the worker, runbook retrieval, and model execution are later milestones. See [database/API contracts](database-api.md).
+The marketing samples are local UI playback. The API verifies JWT identity and workspace membership, persists scoped customer/case/job records in Neon, and exposes typed evidence/report/feedback contracts. The Next.js frontend implements Neon SDK signup/login, session guards, and a server-side JWT API proxy. Ledger, the separate reporting demo, exposes customer/permission/config/job/log evidence and protected scenario controls backed by isolated SQLite. Its evaluator writes private answers outside the diagnostic service. The FaultBrief investigation worker, bounded tool orchestration, runbook retrieval, and model execution are later milestones. See [database/API contracts](database-api.md).
 
 ## Planned investigation runtime
 

@@ -1,6 +1,6 @@
 # Backend
 
-FastAPI with a PostgreSQL data model, Alembic migrations, Neon JWT verification, and company/customer-scoped API contracts. The database stores investigations and queued jobs; worker execution and browser sign-in come in later milestones.
+FastAPI with a PostgreSQL data model, Alembic migrations, Neon JWT verification, and company/customer-scoped API contracts. The database stores investigations and queued jobs; worker execution is the next milestone. The separate Next.js frontend implements Neon SDK signup/login; see [authentication](../docs/authentication.md).
 
 Run `pnpm run setup`, configure `backend/.env` using its example, apply `pnpm run db:migrate`, then use `pnpm run dev`. The existing `DB_URL`, `AUTH_URL`, and `JWKS_URL` names are supported. Actual environment files stay ignored.
 

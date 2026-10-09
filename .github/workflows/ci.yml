@@ -66,7 +66,7 @@ jobs:
       - name: Check formatting, lint, backend tests, build, and types
         run: pnpm run check
 
-      - name: Check browser authentication with a loopback test provider
+      - name: Check browser authentication and the reporting demo
         run: pnpm run frontend:e2e
 
       - name: Verify the frontend, API, and demo start

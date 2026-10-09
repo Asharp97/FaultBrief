@@ -83,7 +83,7 @@ For manual API testing, open [the ordered Bruno collection](tests/bruno/README.m
 - `frontend/pnpm-lock.yaml` is the JavaScript dependency source of truth. `backend/uv.lock` is the Python source of truth.
 - The API and demo health endpoints are liveness checks, not claims that a database, model, or integration is connected.
 
-The homepage's samples use prepared synthetic data. The separate demo service currently exposes its health endpoint; reproducible customer failures are a later implementation step.
+The homepage’s samples use prepared synthetic data. The separate [Ledger reporting SaaS](demo/README.md) has repeatable customer failures, diagnostic records, CSV exports, and protected lab controls. Run `pnpm run demo:configure` before using its authenticated routes.
 
 ## Architecture and contribution
 

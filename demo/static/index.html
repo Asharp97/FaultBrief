@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ledger — FaultBrief reporting lab</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <a class="brand" href="/">Ledger<span>.</span></a
+        ><span class="tag">A synthetic reporting SaaS for FaultBrief</span>
+      </header>
+      <div class="intro">
+        <p class="eyebrow">The customer’s side of the story</p>
+        <h1>A report. A request.<br />Something goes wrong.</h1>
+        <p>
+          Create an account scenario, reproduce its export request, and inspect the records a
+          support investigator could actually see.
+        </p>
+      </div>
+      <section class="panel">
+        <h2>Lab access</h2>
+        <p>
+          Use the separate demo keys in <code>demo/.env</code>. Keys stay in memory while this page
+          is open.
+        </p>
+        <form id="access-form" class="controls">
+          <label
+            >Reporting app token<input
+              type="password"
+              id="app-key"
+              autocomplete="off"
+              required /></label
+          ><button>Connect reporting app</button>
+        </form>
+      </section>
+      <p id="notice" role="status" aria-live="polite"></p>
+      <div class="grid">
+        <section class="panel">
+          <h2>Customer account</h2>
+          <label
+            >Customer<select id="customer">
+              <option value="">Connect to choose an account</option>
+            </select></label
+          >
+          <div id="config" class="record">No customer selected.</div>
+          <label>Act as member<select id="member"></select></label>
+          <div id="permissions" class="small"></div>
+        </section>
+        <section class="panel">
+          <h2>Revenue report</h2>
+          <p class="small">
+            Prepared synthetic figures, with a real export request and CSV download.
+          </p>
+          <div id="report"></div>
+          <button id="export" disabled>Export report</button>
+          <p id="request" class="small"></p>
+        </section>
+      </div>
+      <section class="panel">
+        <div class="heading">
+          <h2>Export jobs</h2>
+          <button id="refresh" class="secondary">Refresh evidence</button>
+        </div>
+        <div id="jobs" class="record">Select a customer to inspect its jobs.</div>
+      </section>
+      <section class="panel">
+        <h2>Request logs</h2>
+        <p id="coverage" class="small"></p>
+        <div id="logs" class="record">No evidence loaded.</div>
+      </section>
+      <details class="panel lab">
+        <summary>Lab operator — create or reset a scenario</summary>
+        <p>
+          Operator controls are separate from diagnostic reads. The investigator’s read-only key
+          cannot access them.
+        </p>
+        <form id="operator-form" class="controls">
+          <label
+            >Lab operator token<input
+              type="password"
+              id="operator-key"
+              autocomplete="off"
+              required /></label
+          ><button>Load scenario controls</button>
+        </form>
+        <form id="scenario-form" class="controls" hidden>
+          <label>Scenario<select id="scenario"></select></label><button>Create scenario</button>
+        </form>
+        <div id="run" class="small"></div>
+        <button id="reset" class="secondary" hidden>Reset this run to healthy</button>
+      </details>
+      <footer>
+        Ledger is a controlled test service. Its exports are simulated background jobs. No AI model
+        runs here, and service health stays green even when one customer’s export fails.
+      </footer>
+    </main>
+  </body>
+</html>

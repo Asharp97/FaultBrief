@@ -1,0 +1,31 @@
+meta {
+  name: 20 Observe permission_removed evidence
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{demo_url}}/v1/customers/{{customer_id}}/logs
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{diagnostic_token}}
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Expected behavior", function () {
+    const body=res.getBody();
+    expect(body.coverage).to.equal("full");
+    expect(body.items).not.to.have.length(0);
+  });
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 200.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

@@ -11,7 +11,7 @@ pnpm run check
 pnpm run smoke
 ```
 
-These verify Prettier formatting, Ruff lint and formatting, backend integration tests, the production frontend build, TypeScript, and startup of the frontend/API/demo. CI provisions a disposable PostgreSQL 18 service for migration and authorization tests and verifies the exported OpenAPI contract. No model provider, GPU, Neon credentials, or deployment account is needed. Add browser tests and additional investigation/authorization tests to these commands when those features arrive.
+These verify Prettier formatting, Ruff lint and formatting, backend integration tests, the production frontend build, TypeScript, and startup of the frontend/API/demo. CI provisions a disposable PostgreSQL 18 service for migration and authorization tests and verifies the exported OpenAPI contract. No model provider, GPU, Neon credentials, or deployment account is needed. CI also installs Chromium and runs `pnpm run frontend:e2e`: the real Neon SDK talks to a loopback provider/API double, and the reporting demo runs with an isolated temporary SQLite database and synthetic keys.
 
 Keep this job name stable. Branch protection requires this exact check; changing the name requires updating the protection rule.
 

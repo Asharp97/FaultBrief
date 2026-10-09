@@ -1,0 +1,41 @@
+meta {
+  name: 23 Create feature_disabled run
+  type: http
+  seq: 23
+}
+
+post {
+  url: {{demo_url}}/lab/runs
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operator_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "scenario": "feature_disabled"
+  }
+}
+
+tests {
+  test("HTTP 201", function () { expect(res.getStatus()).to.equal(201); });
+  test("Expected behavior", function () {
+    const body=res.getBody();
+    expect(body.probe.status_code).to.equal(409);
+    ["run_id","customer_id","member_id","report_id"].forEach(function(name){bru.setVar(name,body[name]);});
+  });
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 201.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

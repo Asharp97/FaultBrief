@@ -21,6 +21,9 @@
     "db:sql": "node scripts/migrate.mjs sql",
     "api:export": "node scripts/export-contracts.mjs",
     "auth:configure": "node scripts/configure-auth.mjs",
-    "frontend:e2e": "pnpm --dir frontend test:e2e"
+    "frontend:e2e": "pnpm --dir frontend test:e2e",
+    "demo:configure": "node scripts/configure-demo.mjs",
+    "demo:scenario": "node scripts/demo-scenario.mjs",
+    "demo:api": "node scripts/demo-api.mjs"
   }
 }

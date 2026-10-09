@@ -1,0 +1,42 @@
+meta {
+  name: 04 Create healthy run
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{demo_url}}/lab/runs
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operator_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "scenario": "healthy"
+  }
+}
+
+tests {
+  test("HTTP 201", function () { expect(res.getStatus()).to.equal(201); });
+  test("Expected behavior", function () {
+    const body=res.getBody();
+    expect(body.probe.status_code).to.equal(202);
+    ["run_id","customer_id","member_id","report_id"].forEach(function(name){bru.setVar(name,body[name]);});
+    bru.setVar("job_id",body.probe.job_id);
+  });
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 201.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

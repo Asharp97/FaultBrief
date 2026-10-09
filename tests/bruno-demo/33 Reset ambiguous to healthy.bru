@@ -1,0 +1,39 @@
+meta {
+  name: 33 Reset ambiguous to healthy
+  type: http
+  seq: 33
+}
+
+post {
+  url: {{demo_url}}/lab/runs/{{run_id}}/reset
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operator_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Expected behavior", function () {
+    const body=res.getBody();
+    expect(body.generation).to.equal(2);
+    expect(body.probe.status_code).to.equal(202);
+  });
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 200.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+
