@@ -21,6 +21,22 @@ jobs:
     name: FaultBrief CI
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      FAULTBRIEF_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/faultbrief_test
+    services:
+      postgres:
+        image: postgres@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336 # PostgreSQL 18
+        env:
+          POSTGRES_DB: faultbrief_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out the proposed change
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0

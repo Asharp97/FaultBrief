@@ -4,8 +4,12 @@ version = "0.1.0"
 description = "API and shared Python development environment for FaultBrief"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+  "alembic>=1.16,<2",
   "fastapi>=0.115,<1",
+  "psycopg[binary]>=3.2,<4",
   "pydantic-settings>=2.6,<3",
+  "pyjwt[crypto]>=2.10,<3",
+  "sqlalchemy>=2.0,<2.1",
   "uvicorn>=0.30,<1",
 ]
 

@@ -2,7 +2,7 @@
 
 An evidence-led support investigation project: identify the affected customer, gather permitted records, and produce a reviewable finding and suggested handoff.
 
-The current repository contains a static interactive marketing preview, an API foundation, a demo-service foundation, and the development tooling. It does not yet run live AI investigations, query Neon, or implement authentication.
+The repository contains the marketing preview, a Neon-backed API with verified JWT identity and workspace/customer scopes, versioned database migrations and OpenAPI contracts, and a demo-service foundation. Browser sign-in and the investigation worker are the next milestones.
 
 ## Repository layout
 
@@ -74,9 +74,10 @@ Use that command to apply the shared JavaScript/CSS/Markdown formatting rules. P
 
 ## Configuration and data
 
-- Root `.env`: backend-only configuration and future Neon/provider credentials.
+- Root `.env`: local defaults and optional server configuration.
+- `backend/.env`: Neon database/Auth configuration, using `DB_URL`, `AUTH_URL`, and `JWKS_URL`.
 - `frontend/.env.local`: public browser configuration only, such as the future API base URL.
-- Both environment files are ignored by Git; only the example files are versioned.
+- All environment files are ignored by Git; only the example files are versioned.
 - `frontend/pnpm-lock.yaml` is the JavaScript dependency source of truth. `backend/uv.lock` is the Python source of truth.
 - The API and demo health endpoints are liveness checks, not claims that a database, model, or integration is connected.
 
@@ -84,7 +85,7 @@ The homepage's samples use prepared synthetic data. The separate demo service cu
 
 ## Architecture and contribution
 
-Read [architecture](docs/architecture.md), [development](docs/development.md), [continuous integration](docs/continuous-integration.md), and [contribution conventions](CONTRIBUTING.md). Every repository-changing handoff includes a suggested commit message. The first milestone is one investigation verified against a deliberately introduced failure.
+Read [database/API contracts](docs/database-api.md), [architecture](docs/architecture.md), [development](docs/development.md), [continuous integration](docs/continuous-integration.md), and [contribution conventions](CONTRIBUTING.md). Every repository-changing handoff includes a suggested commit message. The first milestone is one investigation verified against a deliberately introduced failure.
 
 ## License
 

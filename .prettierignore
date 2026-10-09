@@ -15,3 +15,4 @@
 training/artifacts/
 training/data/private/
 LICENSE
+docs/api/openapi.json

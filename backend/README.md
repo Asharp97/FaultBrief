@@ -1,7 +1,9 @@
 # Backend
 
-Python/FastAPI foundation with validated environment settings, a liveness endpoint, and an explicit local CORS policy. It does not yet connect to Neon, run a model, or expose customer diagnostic operations.
+FastAPI with a PostgreSQL data model, Alembic migrations, Neon JWT verification, and company/customer-scoped API contracts. The database stores investigations and queued jobs; worker execution and browser sign-in come in later milestones.
 
-Use the root `pnpm run setup` and `pnpm run dev` commands. Dependencies are declared in `pyproject.toml` and resolved in `uv.lock`. Python 3.12 is the isolated backend runtime; heavy model-training dependencies are deferred.
+Run `pnpm run setup`, configure `backend/.env` using its example, apply `pnpm run db:migrate`, then use `pnpm run dev`. The existing `DB_URL`, `AUTH_URL`, and `JWKS_URL` names are supported. Actual environment files stay ignored.
 
-`app/config.py` reads the root `.env`. Secrets use secret-valued settings and are never included in the health response. Add database readiness checks only when the database integration exists.
+Read [the database/API guide](../docs/database-api.md) for entity relationships, roles, state transitions, endpoint contracts, migrations, and disposable PostgreSQL testing. Inspect the API at `/docs` or use the versioned [OpenAPI artifact](../docs/api/openapi.json).
+
+Dependencies remain locked in `uv.lock`. All model-training dependencies are separate from this lightweight API runtime. `/health` is liveness only; it does not poll Neon or imply a worker is running.
