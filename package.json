@@ -5,7 +5,7 @@
   "license": "MIT",
   "packageManager": "pnpm@11.24.0",
   "engines": {
-    "node": "\u003e=24 \u003c25"
+    "node": ">=24 <25"
   },
   "scripts": {
     "setup": "node scripts/setup.mjs",
@@ -19,6 +19,8 @@
     "db:migrate": "node scripts/migrate.mjs upgrade",
     "db:check": "node scripts/migrate.mjs check",
     "db:sql": "node scripts/migrate.mjs sql",
-    "api:export": "node scripts/export-contracts.mjs"
+    "api:export": "node scripts/export-contracts.mjs",
+    "auth:configure": "node scripts/configure-auth.mjs",
+    "frontend:e2e": "pnpm --dir frontend test:e2e"
   }
 }

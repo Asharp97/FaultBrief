@@ -53,3 +53,7 @@ training/data/private/
 Thumbs.db
 .idea/
 .vscode/
+
+# Browser test artifacts may include authenticated page content.
+frontend/test-results/
+frontend/playwright-report/

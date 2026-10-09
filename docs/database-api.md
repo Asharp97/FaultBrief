@@ -69,7 +69,7 @@ List responses contain `items`, `limit`, and `offset`. Limit is 1–100; offset 
 
 ## Neon configuration and authentication
 
-Read [the authentication flow and current implementation gaps](authentication.md). FaultBrief verifies Neon JWTs; provider signup/login endpoints are external and the browser sign-in flow is not implemented yet.
+Read [the authentication flow and current implementation gaps](authentication.md). FaultBrief verifies Neon JWTs; signup/login uses the Neon SDK through the Next.js provider proxy; see the separate auth routes and setup walkthrough.
 
 `Settings` reads the root `.env` and then `backend/.env`; the later file overrides matching variable names. Process environment values take priority. Use one database naming style when populating files: `DB_URL` or its canonical alias `DATABASE_URL`.
 
@@ -84,7 +84,7 @@ Read [the authentication flow and current implementation gaps](authentication.md
 
 Send the short-lived Neon Auth **JWT**, not an opaque session cookie, as `Authorization: Bearer <token>`. The verifier uses the configured JWKS, constrains the token algorithm to its signing key, verifies signature/issuer/expiry/issue time/subject, and checks the audience when configured. It never follows a key URL supplied by the token. Signing keys are cached with refresh support. The current configured Neon key uses EdDSA; RS256/ES256 keys are also supported for compatible providers. See [Neon's managed-token verification guidance](https://neon.com/docs/compute/functions/authentication).
 
-The browser sign-in UI is a later step. The backend does not collect or store Neon passwords. The public marketing samples remain prepared UI data, independent of these API routes. No worker, live diagnostics, or model execution is introduced by this milestone.
+The Next.js browser signup/login flow is implemented; see [authentication](authentication.md). The backend does not collect or store Neon passwords. The public marketing samples remain prepared UI data, independent of these API routes. No worker, live diagnostics, or model execution is introduced by this milestone.
 
 ## Migrations and contract maintenance
 

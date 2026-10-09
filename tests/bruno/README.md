@@ -4,7 +4,7 @@ Open this directory as a **collection** in [Bruno](https://www.usebruno.com/), s
 
 ## Authentication scope
 
-This collection tests FaultBrief's JWT verification and workspace permissions. It does not yet sign users in or obtain JWTs from Neon. See [what is implemented and what is missing](../../docs/authentication.md). Folder 02 tests already-issued tokens; login/signup will be a separate provider-flow milestone.
+This collection tests FaultBrief's JWT verification and workspace permissions. For signup/login and JWT retrieval, use [the separate Neon flow collection](../bruno-auth/README.md). See [what is implemented and what is missing](../../docs/authentication.md). Folder 02 tests already-issued tokens.
 
 ## Prepare once
 
@@ -13,7 +13,7 @@ This collection tests FaultBrief's JWT verification and workspace permissions. I
 3. Obtain signed JWTs for **two different test users** from the Neon Auth provider configured for this backend. Put them in `tests/bruno/.env`, copied from `.env.example`. This file is ignored by Git. Use a third distinct test user only for the optional viewer tests.
 4. Open the collection and select Local. Keep `run_report_fixture=false` and `run_viewer_tests=false` for the first pass. Use sequential execution; these requests share captured IDs.
 
-`DB_URL`, `AUTH_URL`, and `JWKS_URL` configure the server; they are **not bearer tokens**. A Neon API key or opaque session token also will not work. For a signed-in Neon Auth client, its `authClient.token()` result contains the JWT at `data.token`; see [Neon authenticated client guidance](https://neon.com/docs/compute/functions/authentication). FaultBrief does not yet expose signup/login endpoints or a browser sign-in screen. You must sign in through your configured provider or a provider SDK test client to obtain these JWTs first.
+`DB_URL`, `AUTH_URL`, and `JWKS_URL` configure the server; they are **not bearer tokens**. A Neon API key or opaque session token also will not work. For a signed-in Neon Auth client, its `authClient.token()` result contains the JWT at `data.token`; see [Neon authenticated client guidance](https://neon.com/docs/compute/functions/authentication). Sign in at the frontend /auth/sign-in page and use Copy API token for Bruno, or use the separate Neon flow collection to obtain these JWTs.
 
 Bruno reads the collection's local `.env` through [process environment variables](https://docs.usebruno.com/secrets-management/dotenv-file). No database credential belongs in that file. Refresh JWTs when they expire; do not paste them into tracked `.bru` files, screenshots, or reports. Restart/reopen Bruno after changing `.env` if it has cached the old values.
 

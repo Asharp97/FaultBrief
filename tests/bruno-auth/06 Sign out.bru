@@ -1,0 +1,31 @@
+meta {
+  name: 06 Sign out
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{frontend_url}}/api/auth/sign-out
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: {{frontend_url}}
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  
+}
+
+docs {
+  Run in sequence with Bruno cookies enabled. Expected HTTP 200.
+  Uses the frontend (Next.js), not FastAPI port 8000. See README for setup.
+}
+

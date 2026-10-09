@@ -1,0 +1,22 @@
+meta {
+  name: 05 Authenticated application identity
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{frontend_url}}/api/faultbrief/me
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Local identity exists", function () { expect(res.getBody().id).to.be.a("string"); });
+}
+
+docs {
+  Run in sequence with Bruno cookies enabled. Expected HTTP 200.
+  Uses the frontend (Next.js), not FastAPI port 8000. See README for setup.
+}
+

@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "FaultBrief — Neon sign-in flow",
+  "type": "collection",
+  "ignore": ["results"],
+  "presets": {
+    "defaultEnvironment": "Local"
+  }
+}

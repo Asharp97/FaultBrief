@@ -1,0 +1,22 @@
+meta {
+  name: 07 Application identity denied after logout
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{frontend_url}}/api/faultbrief/me
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 401", function () { expect(res.getStatus()).to.equal(401); });
+  test("Session access removed", function () { expect(res.getBody().detail).to.equal("Authentication is required."); });
+}
+
+docs {
+  Run in sequence with Bruno cookies enabled. Expected HTTP 401.
+  Uses the frontend (Next.js), not FastAPI port 8000. See README for setup.
+}
+

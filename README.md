@@ -2,7 +2,7 @@
 
 An evidence-led support investigation project: identify the affected customer, gather permitted records, and produce a reviewable finding and suggested handoff.
 
-The repository contains the marketing preview, a Neon-backed API with verified JWT identity and workspace/customer scopes, versioned database migrations and OpenAPI contracts, and a demo-service foundation. Browser sign-in and the investigation worker are the next milestones.
+The repository contains the marketing preview, a Neon-backed API with verified JWT identity and workspace/customer scopes, versioned database migrations and OpenAPI contracts, and a demo-service foundation. Neon SDK signup/login and a protected workspace page are implemented. The investigation worker is the next milestone.
 
 ## Repository layout
 
@@ -36,7 +36,7 @@ pnpm run setup
 
 Setup copies missing environment examples without overwriting existing files, installs the locked frontend dependencies, and installs the locked Python environment. uv and its caches are kept in the ignored `.tools/` directory.
 
-Then start all three services with one command:
+Configure signup/login with `pnpm run auth:configure` and follow [the Neon setup walkthrough](docs/authentication.md). Then start all three services with one command:
 
 ```sh
 pnpm run dev
@@ -78,7 +78,7 @@ For manual API testing, open [the ordered Bruno collection](tests/bruno/README.m
 
 - Root `.env`: local defaults and optional server configuration.
 - `backend/.env`: Neon database/Auth configuration, using `DB_URL`, `AUTH_URL`, and `JWKS_URL`.
-- `frontend/.env.local`: public browser configuration only, such as the future API base URL.
+- `frontend/.env.local`: server-only Neon SDK, cookie secret, and API proxy settings; run `pnpm run auth:configure`.
 - All environment files are ignored by Git; only the example files are versioned.
 - `frontend/pnpm-lock.yaml` is the JavaScript dependency source of truth. `backend/uv.lock` is the Python source of truth.
 - The API and demo health endpoints are liveness checks, not claims that a database, model, or integration is connected.
