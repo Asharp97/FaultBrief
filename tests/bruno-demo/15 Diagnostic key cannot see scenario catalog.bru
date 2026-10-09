@@ -1,0 +1,27 @@
+meta {
+  name: 15 Diagnostic key cannot see scenario catalog
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{demo_url}}/lab/scenarios
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{diagnostic_token}}
+}
+
+tests {
+  test("HTTP 403", function () { expect(res.getStatus()).to.equal(403); });
+  
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 403.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

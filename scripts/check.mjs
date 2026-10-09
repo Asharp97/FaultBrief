@@ -38,6 +38,16 @@ try {
     "backend.app.export_contracts",
     "--check",
   ]);
+  runUv([
+    "run",
+    "--project",
+    "backend",
+    "--locked",
+    "python",
+    "-m",
+    "demo.app.export_contracts",
+    "--check",
+  ]);
   run(pnpm, ["--dir", "frontend", "build"]);
   run(pnpm, ["--dir", "frontend", "typecheck"]);
   console.log("All repository checks passed.");

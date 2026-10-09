@@ -1,0 +1,47 @@
+meta {
+  name: 02 List user A workspaces
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/v1/workspaces
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+script:pre-request {
+  ["token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.items).to.be.an("array");
+    expect(body.limit).to.equal(50);
+    expect(body.offset).to.equal(0);
+    expect(body.items.length).to.be.greaterThan(0);
+  });
+}
+
+docs {
+  List user A workspaces.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 200.
+  Existing workspaces are allowed. The page is sorted oldest first, so a new workspace need not be in page 1.
+}
+

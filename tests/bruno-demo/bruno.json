@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Ledger — ordered reporting SaaS tests",
+  "type": "collection",
+  "ignore": ["results"],
+  "presets": {
+    "defaultEnvironment": "Local"
+  }
+}

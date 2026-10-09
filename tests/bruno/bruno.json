@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "FaultBrief",
+  "type": "collection",
+  "ignore": ["node_modules", ".git", "results"],
+  "presets": {
+    "defaultEnvironment": "Local"
+  }
+}

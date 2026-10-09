@@ -1,0 +1,47 @@
+meta {
+  name: 11 Read queued investigation
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_a_id}}/investigations/{{investigation_a_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+script:pre-request {
+  ["workspace_a_id","investigation_a_id","token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("investigation_a_id"));
+    expect(body.customer_id).to.equal(bru.getVar("customer_a_id"));
+    expect(body.state).to.equal("queued");
+    expect(body.started_at).to.equal(null);
+    expect(body.finished_at).to.equal(null);
+  });
+}
+
+docs {
+  Read queued investigation.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 200.
+}
+

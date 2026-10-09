@@ -1,0 +1,32 @@
+meta {
+  name: 04 Missing bearer token
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/v1/me
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 401", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(401);
+    const body = res.getBody();
+    expect(body).to.have.all.keys("detail");
+    expect(body.detail).to.be.a("string").that.is.not.empty;
+    
+  });
+}
+
+docs {
+  Missing bearer token.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 401.
+}
+

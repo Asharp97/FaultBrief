@@ -53,3 +53,12 @@ training/data/private/
 Thumbs.db
 .idea/
 .vscode/
+
+# Browser test artifacts may include authenticated page content.
+frontend/test-results/
+frontend/playwright-report/
+
+# Isolated reporting-demo databases, including custom local paths.
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm

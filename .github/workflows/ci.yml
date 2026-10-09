@@ -60,8 +60,14 @@ jobs:
       - name: Install locked dependencies
         run: pnpm run setup
 
+      - name: Install Chromium for authentication browser tests
+        run: pnpm --dir frontend exec playwright install --with-deps chromium
+
       - name: Check formatting, lint, backend tests, build, and types
         run: pnpm run check
+
+      - name: Check browser authentication and the reporting demo
+        run: pnpm run frontend:e2e
 
       - name: Verify the frontend, API, and demo start
         run: pnpm run smoke

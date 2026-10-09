@@ -1,0 +1,57 @@
+meta {
+  name: 04 Create affected customer A
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{workspace_a_id}}/customers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Jamie synthetic customer",
+    "external_id": "bruno-customer-{{run_id}}"
+  }
+}
+
+script:pre-request {
+  ["workspace_a_id","run_id","token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(201);
+    const body = res.getBody();
+    expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    bru.setVar("customer_a_id", body.id);
+    expect(body.workspace_id).to.equal(bru.getVar("workspace_a_id"));
+    expect(body.external_id).to.equal("bruno-customer-" + bru.getVar("run_id"));
+  });
+}
+
+docs {
+  Create affected customer A.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 201.
+}
+

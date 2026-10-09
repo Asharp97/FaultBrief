@@ -231,9 +231,11 @@ export default function Home() {
           <a href="#principles">Principles</a>
         </nav>
         <div className="header-actions">
-          <span className="prototype-label">A product in progress</span>
-          <a className="button button-teal button-small" href="#product">
-            Try the sample <ArrowUpRight size={15} />
+          <a className="text-link" href="/auth/sign-in">
+            Sign in
+          </a>
+          <a className="button button-teal button-small" href="/auth/sign-up">
+            Create account <ArrowUpRight size={15} />
           </a>
         </div>
         <button
@@ -256,8 +258,8 @@ export default function Home() {
             <a onClick={closeMenu} href="#principles">
               Principles
             </a>
-            <a onClick={closeMenu} href="#product">
-              Try the sample <ArrowUpRight size={16} />
+            <a onClick={closeMenu} href="/auth/sign-in">
+              Sign in <ArrowUpRight size={16} />
             </a>
           </nav>
         )}

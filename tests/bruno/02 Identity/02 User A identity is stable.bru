@@ -1,0 +1,43 @@
+meta {
+  name: 02 User A identity is stable
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/v1/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+script:pre-request {
+  ["token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("user_a_id"));
+  });
+}
+
+docs {
+  User A identity is stable.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 200.
+}
+

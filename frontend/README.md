@@ -1,35 +1,19 @@
 # FaultBrief frontend
 
-Static Next.js marketing page using Tailwind CSS, GSAP, and self-hosted open-source fonts. The visual direction adapts the supplied paper-and-teal reference to FaultBrief's support-investigation concept.
+Next.js App Router application with a prerendered Tailwind/GSAP marketing homepage and Neon SDK signup/login, a protected workspace page, and server-side API proxies. The paper/teal visual direction and reduced-motion support carry into the account screens.
 
-## Development
+From the repository root, run `pnpm run setup`, `pnpm run auth:configure`, and `pnpm run dev`. Follow [the complete sign-in walkthrough](../docs/authentication.md) for Neon trusted origins, verification, and test accounts.
 
-```sh
-pnpm install --frozen-lockfile
-pnpm run dev
-```
-
-## Verification and export
+The frontend requires server-only `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, and `FAULTBRIEF_API_BASE_URL`. Actual values live in ignored `.env.local`; the database URL stays in `backend/.env`.
 
 ```sh
-pnpm run typecheck
 pnpm run build
+pnpm run start
+pnpm run typecheck
+pnpm exec playwright install chromium
+pnpm run test:e2e
 ```
 
-The static production site is generated in `out/`. Serve that directory with a static host; it needs no serverless functions. `next start` is not used for a static export.
+Run those commands inside `frontend`. This is no longer an `out/` static export: deploy a Next.js server or compatible managed runtime. The homepage itself remains prerendered; auth and private routes run on the server.
 
-The three interactive investigations are prepared examples. They do not call AI APIs, access Neon, change settings, or imply a connected backend. Motion respects reduced-motion preferences; GSAP instances are cleaned up on unmount.
-
-## Planned infrastructure
-
-- Neon PostgreSQL for investigations, jobs, evidence, and workspace data. Free compute scales to zero and wakes on the next query.
-- Python/FastAPI API plus a worker for live investigations. Neon being a serverless database does not require serverless application functions.
-- An internal model-provider module initially; a separately hosted AI gateway is optional later.
-- Private object storage when files or large artifacts are uploaded. Small runbooks and structured evidence can initially be stored in PostgreSQL.
-- Authentication is a separate choice now that the database choice is Neon.
-- Keep model-provider and database credentials on the backend.
-- Continuous idle polling of a Neon-backed job table can keep database compute active; design worker signaling accordingly.
-
-No domain, backend credentials, authentication, or production deployment has been configured by this frontend.
-
-For the complete development environment, use pnpm run setup and pnpm run dev from the repository root. See ../docs/development.md.
+The marketing investigation samples use synthetic UI data. They do not run a model or claim a connected diagnostic worker. Browser tests use a loopback test provider/API; live Neon email/password testing uses your own development accounts.

@@ -111,7 +111,13 @@ try {
     start(
       pnpm,
       ["--dir", "frontend", "dev", "--hostname", "127.0.0.1", "--port", String(ports.frontend)],
-      smoke ? { env: { ...environment(), FAULTBRIEF_SMOKE: "1" } } : {},
+      {
+        env: {
+          ...environment(),
+          FAULTBRIEF_API_BASE_URL: `http://127.0.0.1:${ports.api}`,
+          ...(smoke ? { FAULTBRIEF_SMOKE: "1" } : {}),
+        },
+      },
     ),
     "Frontend",
   );

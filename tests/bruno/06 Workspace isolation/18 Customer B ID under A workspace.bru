@@ -1,0 +1,46 @@
+meta {
+  name: 18 Customer B ID under A workspace
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_a_id}}/customers/{{customer_b_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+script:pre-request {
+  ["workspace_a_id","customer_b_id","token_a"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(404);
+    const body = res.getBody();
+    expect(body).to.have.all.keys("detail");
+    expect(body.detail).to.be.a("string").that.is.not.empty;
+    
+    expect(body.detail).to.equal("Customer not found.");
+  });
+}
+
+docs {
+  Customer B ID under A workspace.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 404 — Customer not found..
+}
+

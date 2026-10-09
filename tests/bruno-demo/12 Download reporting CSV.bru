@@ -1,0 +1,30 @@
+meta {
+  name: 12 Download reporting CSV
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{demo_url}}/v1/customers/{{customer_id}}/jobs/{{job_id}}/download?member_id={{member_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{app_token}}
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Expected behavior", function () {
+    const body=res.getBody();
+    expect(body).to.include("revenue_usd");
+  });
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 200.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

@@ -1,0 +1,58 @@
+meta {
+  name: 02 Same external ID in company B
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{workspace_b_id}}/customers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_b}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Separate company customer",
+    "external_id": "bruno-customer-{{run_id}}"
+  }
+}
+
+script:pre-request {
+  ["workspace_b_id","run_id","token_b"].forEach(function (name) {
+    const value = (bru.getVar(name) || bru.getEnvVar(name));
+    if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+      throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+    }
+  });
+}
+
+tests {
+  test("HTTP 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(201);
+    const body = res.getBody();
+    expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    bru.setVar("customer_b_id", body.id);
+    expect(body.workspace_id).to.equal(bru.getVar("workspace_b_id"));
+    expect(body.id).not.to.equal(bru.getVar("customer_a_id"));
+  });
+}
+
+docs {
+  Same external ID in company B.
+  
+  Prerequisites: run earlier numbered folders and requests in order.
+  Expected: HTTP 201.
+  The same external customer ID is valid in another workspace.
+}
+

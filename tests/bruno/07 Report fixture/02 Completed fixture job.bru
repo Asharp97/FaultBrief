@@ -1,0 +1,59 @@
+meta {
+  name: 02 Completed fixture job
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{fixture_workspace_id}}/investigations/{{fixture_investigation_id}}/jobs
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token_a}}
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_report_fixture")) !== "true") {
+    bru.runner.skipRequest();
+  } else {
+    ["fixture_workspace_id","fixture_investigation_id","token_a"].forEach(function (name) {
+      const value = (bru.getVar(name) || bru.getEnvVar(name));
+      if (!value || String(value).includes("replace-with-") || String(value).includes("{{")) {
+        throw new Error("Missing " + name + ". Select Local, fill tokens, and run earlier numbered requests first (see README).");
+      }
+    });
+    
+  }
+  
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.items).to.be.an("array");
+    expect(body.limit).to.equal(50);
+    expect(body.offset).to.equal(0);
+    body.items.forEach(function (item) {
+      expect(item.workspace_id).to.equal(bru.getEnvVar("fixture_workspace_id"));
+      expect(item.investigation_id).to.equal(bru.getEnvVar("fixture_investigation_id"));
+    });
+    expect(body.items).to.have.length(1);
+    expect(body.items[0].state).to.equal("completed");
+    expect(body.items[0].attempts).to.equal(1);
+  });
+}
+
+docs {
+  Completed fixture job.
+  
+  Prerequisites: run the fixture helper and set all fixture_* variables in Local.
+  Expected: HTTP 200.
+  Skipped unless run_report_fixture=true. See README for setup.
+}
+

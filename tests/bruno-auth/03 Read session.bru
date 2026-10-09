@@ -1,0 +1,22 @@
+meta {
+  name: 03 Read session
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{frontend_url}}/api/auth/get-session
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Session exists", function () { expect(res.getBody().user.email).to.equal(bru.getEnvVar("email")); });
+}
+
+docs {
+  Run in sequence with Bruno cookies enabled. Expected HTTP 200.
+  Uses the frontend (Next.js), not FastAPI port 8000. See README for setup.
+}
+

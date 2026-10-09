@@ -1,0 +1,22 @@
+meta {
+  name: 04 Obtain signed API JWT
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{frontend_url}}/api/auth/token
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("JWT returned", function () { const token = res.getBody().token; expect(token.split(".")).to.have.length(3); bru.setVar("api_token", token); });
+}
+
+docs {
+  Run in sequence with Bruno cookies enabled. Expected HTTP 200.
+  Uses the frontend (Next.js), not FastAPI port 8000. See README for setup.
+}
+

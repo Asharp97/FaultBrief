@@ -1,0 +1,38 @@
+meta {
+  name: 14 Diagnostic key cannot create exports
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{demo_url}}/v1/customers/{{customer_id}}/exports
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{diagnostic_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "member_id": "{{member_id}}",
+    "report_id": "{{report_id}}"
+  }
+}
+
+tests {
+  test("HTTP 403", function () { expect(res.getStatus()).to.equal(403); });
+  
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 403.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

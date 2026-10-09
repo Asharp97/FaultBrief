@@ -3,6 +3,7 @@ import "@fontsource-variable/bodoni-moda";
 import "@fontsource-variable/inter";
 import "@fontsource/geist-mono/400.css";
 import "./globals.css";
+import "./account.css";
 
 export const metadata: Metadata = {
   title: "FaultBrief — Follow the evidence",

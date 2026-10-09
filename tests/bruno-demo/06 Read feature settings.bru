@@ -1,0 +1,31 @@
+meta {
+  name: 06 Read feature settings
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{demo_url}}/v1/customers/{{customer_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{diagnostic_token}}
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Expected behavior", function () {
+    const body=res.getBody();
+    expect(body.exports_enabled).to.equal(true);
+    expect(body).not.to.have.property("fault_mode");
+  });
+}
+
+docs {
+  Run earlier requests first with Local selected. Expected HTTP 200.
+  This collection operates on synthetic Ledger data, never Neon workspace data.
+  Scenario creation/reset requires the operator key; diagnostic reads use the read-only key.
+}
+

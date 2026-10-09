@@ -1,0 +1,32 @@
+meta {
+  name: 02 OpenAPI contract
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/openapi.json
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Response contract and captured IDs", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.openapi).to.be.a("string");
+    expect(body.info.title).to.equal("FaultBrief API");
+    expect(body.paths["/v1/me"].get).to.be.an("object");
+  });
+}
+
+docs {
+  OpenAPI contract.
+  
+  Prerequisites: services running; Local selected; test JWTs configured for authenticated requests.
+  Expected: HTTP 200.
+}
+
