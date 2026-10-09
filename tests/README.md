@@ -1,7 +1,9 @@
 # Tests
 
-Current integration checks cover the API's origin policy, secret-safe health response, and the separation between the API and demo services.
+Current checks cover JWT signatures and claims, CORS and secret-safe errors, customer/workspace isolation, local role authority and revocation, queue persistence, scoped citations, read-only tool-call metadata, confidence bounds, and all investigation states.
 
-Run them through `pnpm run check`. The startup smoke check uses unused local ports and real HTTP requests rather than asserting only that modules import.
+PostgreSQL tests exercise the frozen migration's upgrade, drift check, downgrade, replay, and unrelated-schema preservation. They use only an explicit disposable loopback `FAULTBRIEF_TEST_DATABASE_URL` ending in `_test`, with per-test rollback. They never fall back to the configured Neon credentials.
 
-Later tests should cover workspace isolation, tool argument validation, worker recovery, bounded investigations, citation correctness, and inconclusive outcomes.
+See [database/API testing](../docs/database-api.md#testing) for native Postgres or the optional pinned Docker service. With that variable set, run `pnpm run check`. Without it, local database tests skip; CI requires and provides its own service. The startup smoke check uses real HTTP requests on unused ports.
+
+Next coverage should focus on worker recovery, bounded diagnostic tools, verified seeded failures, browser sign-in, and the private dashboard.

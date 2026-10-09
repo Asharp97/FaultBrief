@@ -5,7 +5,7 @@
   "license": "MIT",
   "packageManager": "pnpm@11.24.0",
   "engines": {
-    "node": ">=24 <25"
+    "node": "\u003e=24 \u003c25"
   },
   "scripts": {
     "setup": "node scripts/setup.mjs",
@@ -15,6 +15,10 @@
     "format": "pnpm --dir frontend exec prettier .. --ignore-path ../.prettierignore --ignore-path ../.gitignore --write",
     "format:check": "pnpm --dir frontend exec prettier .. --ignore-path ../.prettierignore --ignore-path ../.gitignore --check",
     "frontend:build": "pnpm --dir frontend build",
-    "frontend:typecheck": "pnpm --dir frontend typecheck"
+    "frontend:typecheck": "pnpm --dir frontend typecheck",
+    "db:migrate": "node scripts/migrate.mjs upgrade",
+    "db:check": "node scripts/migrate.mjs check",
+    "db:sql": "node scripts/migrate.mjs sql",
+    "api:export": "node scripts/export-contracts.mjs"
   }
 }

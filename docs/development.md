@@ -27,9 +27,9 @@ The launcher binds local services to loopback addresses and stops only its own c
 
 ## Configuration
 
-Root `.env` contains backend-only values. Blank optional credentials are ignored until their integration exists. `frontend/.env.local` contains public browser values only. Do not place a connection string or provider secret behind a `NEXT_PUBLIC_` prefix.
+Root `.env` supplies defaults; `backend/.env` supplies Neon credentials and overrides matching keys. See [database/API configuration and testing](database-api.md). Blank optional credentials are ignored until their integration exists. `frontend/.env.local` contains public browser values only. Do not place a connection string or provider secret behind a `NEXT_PUBLIC_` prefix.
 
-API CORS explicitly allows the configured frontend origin. This is a browser boundary, not authentication. Authentication and workspace authorization arrive in the next implementation stages.
+API CORS explicitly allows the configured frontend origin. This is a browser boundary, not authentication. The scoped API now verifies Neon JWTs and checks active database memberships. Browser sign-in is a separate next step.
 
 ## Dependency policy
 

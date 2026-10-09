@@ -5,13 +5,16 @@
 ```mermaid
 flowchart TD
     Launcher["Root development launcher"] --> Web["Next.js marketing preview :3000"]
-    Launcher --> API["FastAPI foundation :8000"]
+    Launcher --> API["Scoped FastAPI :8000"]
     Launcher --> Demo["Demo service foundation :8001"]
     API --> Settings["Validated backend-only environment settings"]
+    API --> Identity["Verify Neon JWT and active membership"]
+    Identity --> Keys["Configured Neon Auth JWKS"]
+    API --> DB["Neon: faultbrief application schema"]
     Web --> Samples["Prepared synthetic investigation playback"]
 ```
 
-The marketing samples are local UI playback. The API and demo expose separate liveness endpoints. There is no live connection between the samples, Neon, the demo service, or a model yet.
+The marketing samples are local UI playback. The API verifies JWT identity and workspace membership, persists scoped customer/case/job records in Neon, and exposes typed evidence/report/feedback contracts. The demo service exposes liveness only. Browser sign-in, diagnostic tools, the worker, runbook retrieval, and model execution are later milestones. See [database/API contracts](database-api.md).
 
 ## Planned investigation runtime
 
