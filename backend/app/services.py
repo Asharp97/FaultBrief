@@ -100,17 +100,24 @@ def save_report(session: Session, investigation: Investigation, draft: ReportDra
     """Internal worker operation; validation precedes persistence, caller owns the transaction."""
     evidence_ids = {item.evidence_id for item in draft.citations}
     if evidence_ids:
-        found = set(
-            session.scalars(
-                select(Evidence.id).where(
+        found = {
+            item.id: item
+            for item in session.scalars(
+                select(Evidence).where(
                     Evidence.id.in_(evidence_ids),
                     Evidence.workspace_id == investigation.workspace_id,
                     Evidence.investigation_id == investigation.id,
                 )
             )
-        )
-        if found != evidence_ids:
+        }
+        if set(found) != evidence_ids:
             raise ValueError("Citations must belong to this investigation and workspace.")
+        for citation in draft.citations:
+            if (
+                citation.quote
+                and citation.quote not in found[citation.evidence_id].excerpt_redacted
+            ):
+                raise ValueError("Citation quotes must appear in the cited evidence excerpt.")
     report = Report(
         workspace_id=investigation.workspace_id,
         investigation_id=investigation.id,

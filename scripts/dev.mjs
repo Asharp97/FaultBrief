@@ -155,6 +155,25 @@ try {
     ]),
     "Demo",
   );
+  if (!smoke && args.includes("--worker")) {
+    watch(
+      startUv(
+        [
+          "run",
+          "--project",
+          "backend",
+          "--locked",
+          "python",
+          "-m",
+          "backend.app.investigations.worker",
+        ],
+        {
+          env: { ...environment(), DIAGNOSTIC_DEMO_URL: `http://127.0.0.1:${ports.demo}` },
+        },
+      ),
+      "Investigation worker",
+    );
+  }
   if (smoke) {
     await Promise.all([
       ready(`http://127.0.0.1:${ports.frontend}`),

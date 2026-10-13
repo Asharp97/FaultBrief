@@ -14,9 +14,9 @@ flowchart TD
     Web --> Samples["Prepared synthetic investigation playback"]
 ```
 
-The marketing samples are local UI playback. The API verifies JWT identity and workspace membership, persists scoped customer/case/job records in Neon, and exposes typed evidence/report/feedback contracts. The Next.js frontend implements Neon SDK signup/login, session guards, and a server-side JWT API proxy. Ledger, the separate reporting demo, exposes customer/permission/config/job/log evidence and protected scenario controls backed by isolated SQLite. Its evaluator writes private answers outside the diagnostic service. The FaultBrief investigation worker, bounded tool orchestration, runbook retrieval, and model execution are later milestones. See [database/API contracts](database-api.md).
+The marketing samples are local UI playback. The API verifies JWT identity and workspace membership, persists scoped customer/case/job records in Neon, and exposes typed evidence/report/feedback contracts. The Next.js frontend implements Neon SDK signup/login, session guards, and a server-side JWT API proxy. Ledger, the separate reporting demo, exposes customer/permission/config/job/log evidence and protected scenario controls backed by isolated SQLite. Its evaluator writes private answers outside the diagnostic service. The FaultBrief worker now claims leased jobs, runs five bounded diagnostic reads through approved customer mappings, derives a rules finding, validates an optional model explanation, and atomically saves evidence/report output. The dashboard submits tickets and shows facts, uncertainty, next steps, and citations. Fine-tuning and dynamic tool selection remain later milestones. See [database/API contracts](database-api.md).
 
-## Planned investigation runtime
+## Implemented investigation runtime
 
 ```mermaid
 flowchart TD
@@ -24,10 +24,14 @@ flowchart TD
     Dashboard --> API["Scoped backend API"]
     API --> DB["Neon: workspaces, jobs, evidence, reports"]
     DB --> Worker["Bounded investigation worker"]
-    Worker --> Tools["Validated read-only diagnostic tools"]
+    Worker --> Bindings["Server-approved customer/integration mappings"]
+    Bindings --> Tools["Validated read-only diagnostic tools"]
     Tools --> Demo["Demo SaaS settings, jobs, and logs"]
     Tools --> Docs["Versioned runbook retrieval"]
-    Worker --> Model["Reasoning model and optional tuned router"]
+    Worker --> Rules["Deterministic, evidence-supported baseline"]
+    Rules --> Model["Optional structured model explanation"]
+    Model --> Validation["Locked findings, known citations, exact quotes"]
+    Validation --> DB
     Worker --> DB
 ```
 

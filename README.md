@@ -2,7 +2,7 @@
 
 An evidence-led support investigation project: identify the affected customer, gather permitted records, and produce a reviewable finding and suggested handoff.
 
-The repository contains the marketing preview, a Neon-backed API with verified JWT identity and workspace/customer scopes, versioned database migrations and OpenAPI contracts, and a demo-service foundation. Neon SDK signup/login and a protected workspace page are implemented. The investigation worker is the next milestone.
+The repository contains the marketing preview, a Neon-backed API with verified JWT identity and workspace/customer scopes, versioned database migrations and OpenAPI contracts, and a demo-service foundation. Neon SDK signup/login and a protected workspace page are implemented. Bounded read-only diagnostics, a leased investigation worker, deterministic findings, optional model explanations, and a ticket/report dashboard are implemented. Follow the [end-to-end walkthrough](docs/baseline-investigation.md).
 
 ## Repository layout
 
@@ -41,6 +41,8 @@ Configure signup/login with `pnpm run auth:configure` and follow [the Neon setup
 ```sh
 pnpm run dev
 ```
+
+To process investigation tickets too, use `pnpm run dev --worker` after applying migrations and approving the affected customer through [diagnostic setup](docs/diagnostic-tools.md). Inference credentials are optional: the rules baseline works independently.
 
 | Service            | Local address                |
 | ------------------ | ---------------------------- |

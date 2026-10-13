@@ -4,7 +4,7 @@ import { randomUUID, generateKeyPairSync, sign } from "node:crypto";
 
 const sessions = new Map();
 const apiTokens = new Map();
-const { privateKey } = generateKeyPairSync("ed25519");
+const { privateKey, publicKey } = generateKeyPairSync("ed25519");
 function apiToken(cookie, user) {
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
   const now = Math.floor(Date.now() / 1000);
@@ -57,6 +57,17 @@ resets.set("expired-synthetic-reset-token", { email: "expired@example.invalid", 
 createServer(async (req, res) => {
   const url = new URL(req.url, "http://127.0.0.1:58110");
   if (url.pathname === "/health") return json(res, { status: "ok" });
+  if (url.pathname === "/test/jwks")
+    return json(res, {
+      keys: [
+        {
+          ...publicKey.export({ format: "jwk" }),
+          alg: "EdDSA",
+          kid: "synthetic-provider-key",
+          use: "sig",
+        },
+      ],
+    });
   if (url.pathname === "/test/mailbox")
     return json(res, mailbox.get(url.searchParams.get("email")) || null);
   const cookie = (req.headers.cookie || "")
@@ -136,6 +147,14 @@ createServer(async (req, res) => {
   const token = req.headers.authorization?.replace("Bearer ", "");
   const actor = sessions.get(apiTokens.get(token));
   if (!actor) return json(res, { detail: "Unauthorized" }, 401);
+  if (actor.user.email.endsWith("-investigator@example.invalid")) {
+    const forwarded = await fetch("http://127.0.0.1:58113" + url.pathname + url.search, {
+      method: req.method,
+      headers: { Authorization: req.headers.authorization, "Content-Type": "application/json" },
+      ...(req.method !== "GET" ? { body: JSON.stringify(await body(req)) } : {}),
+    });
+    return json(res, await forwarded.json(), forwarded.status);
+  }
   if (url.pathname === "/v1/me") return json(res, { id: actor.user.id });
   if (url.pathname === "/v1/workspaces") {
     if (req.method === "POST") {

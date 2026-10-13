@@ -1,0 +1,43 @@
+meta {
+  name: 15 Review report with feedback
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations/{{investigation_id}}/reports/{{report_id}}/feedback
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "rating": "helpful",
+    "comment": "Manual verification: reviewed the cited records and next steps."
+  }
+}
+
+script:pre-request {
+
+  if (!bru.getVar("investigation_id")) throw new Error("Run 05 first to capture an investigation ID.");
+}
+
+tests {
+  test("HTTP 201", function () { expect(res.getStatus()).to.equal(201); });
+  test("Workflow contract", function () {
+    expect(res.getBody().report_id).to.equal(bru.getVar("report_id"));
+  });
+}
+
+docs {
+  Review report with feedback. Run requests in order against a development workspace with an approved customer and active worker.
+  Expected HTTP 201. After 05, repeat 06 until completed or inconclusive before 07–15.
+}

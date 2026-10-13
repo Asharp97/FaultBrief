@@ -1,0 +1,29 @@
+meta {
+  name: 14 Different account cannot read evidence
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations/{{investigation_id}}/evidence
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{outsider_token}}
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("run_isolation")) !== "true") bru.runner.skipRequest();
+  if (!bru.getVar("investigation_id")) throw new Error("Run 05 first to capture an investigation ID.");
+}
+
+tests {
+  test("HTTP 404", function () { expect(res.getStatus()).to.equal(404); });
+}
+
+docs {
+  Different account cannot read evidence. Run requests in order against a development workspace with an approved customer and active worker.
+  Expected HTTP 404. After 05, repeat 06 until completed or inconclusive before 07–15.
+}

@@ -35,7 +35,7 @@ Start by sending **01 Readiness / 01 API health and new run**. It resets capture
 
 A pass creates two synthetic workspaces, two customers, one disabled integration, and two queued investigations with their jobs. Each rerun starts a fresh pair of workspaces. These are real persisted development records; there is no delete endpoint or automatic cleanup. Keep this collection pointed at a development database. The workspace list is paginated and permits older records from previous runs.
 
-**Current behavior:** no investigation worker is implemented. A freshly queued case has one queued job, empty tool/evidence lists, and no report (404). Those checks are deliberate. Integration creation saves disabled metadata; no external system is contacted. Health checks establish liveness only; `/v1/me` and setup exercise Auth/database connectivity.
+**Queued-state test mode:** run this collection without the investigation worker (`pnpm run dev`, without `--worker`). The worker is now implemented, but these foundation requests deliberately assert freshly queued records. Use [the investigation collection](../bruno-investigations/README.md) for completed/inconclusive worker output. A freshly queued case has one queued job, empty tool/evidence lists, and no report (404). Those checks are deliberate. Integration creation saves disabled metadata; no external system is contacted. Health checks establish liveness only; `/v1/me` and setup exercise Auth/database connectivity.
 
 ## Optional: populated reports and viewer permissions
 

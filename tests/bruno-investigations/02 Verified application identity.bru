@@ -1,0 +1,27 @@
+meta {
+  name: 02 Verified application identity
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/v1/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Workflow contract", function () {
+    expect(res.getBody().id).to.be.a("string");
+  });
+}
+
+docs {
+  Verified application identity. Run requests in order against a development workspace with an approved customer and active worker.
+  Expected HTTP 200. After 05, repeat 06 until completed or inconclusive before 07–15.
+}

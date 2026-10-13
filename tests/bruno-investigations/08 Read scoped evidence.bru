@@ -1,0 +1,32 @@
+meta {
+  name: 08 Read scoped evidence
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations/{{investigation_id}}/evidence?limit=100
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+
+  if (!bru.getVar("investigation_id")) throw new Error("Run 05 first to capture an investigation ID.");
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Workflow contract", function () {
+    const items = res.getBody().items; items.forEach((item) => {expect(item.workspace_id).to.equal(bru.getEnvVar("workspace_id")); expect(item.investigation_id).to.equal(bru.getVar("investigation_id"));}); bru.setVar("evidence_ids", items.map((item) => item.id));
+  });
+}
+
+docs {
+  Read scoped evidence. Run requests in order against a development workspace with an approved customer and active worker.
+  Expected HTTP 200. After 05, repeat 06 until completed or inconclusive before 07–15.
+}

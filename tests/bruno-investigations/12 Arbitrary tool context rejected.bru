@@ -1,0 +1,39 @@
+meta {
+  name: 12 Arbitrary tool context rejected
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customer_id": "{{customer_id}}",
+    "question": "Why did the export request fail?",
+    "context": {
+      "url": "https://untrusted.invalid",
+      "secret": "not-a-real-secret"
+    }
+  }
+}
+
+tests {
+  test("HTTP 422", function () { expect(res.getStatus()).to.equal(422); });
+}
+
+docs {
+  Arbitrary tool context rejected. Run requests in order against a development workspace with an approved customer and active worker.
+  Expected HTTP 422. After 05, repeat 06 until completed or inconclusive before 07–15.
+}

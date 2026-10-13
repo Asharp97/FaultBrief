@@ -68,8 +68,8 @@ export function start(command, args, extra = {}) {
   });
 }
 
-export function startUv(args) {
-  return start(python, ["-m", "uv", ...args]);
+export function startUv(args, extra = {}) {
+  return start(python, ["-m", "uv", ...args], extra);
 }
 
 export async function stop(child) {

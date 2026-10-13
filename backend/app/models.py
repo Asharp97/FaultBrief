@@ -141,6 +141,7 @@ class Investigation(Record, Base):
     customer_id: Mapped[UUID] = mapped_column()
     created_by_user_id: Mapped[UUID] = mapped_column()
     question: Mapped[str] = mapped_column(Text)
+    context: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
     state: Mapped[InvestigationState] = mapped_column(
         enum_type(InvestigationState, "investigation_state"),
         default=InvestigationState.QUEUED,
@@ -245,12 +246,24 @@ class Report(Record, Base):
             ["faultbrief.investigations.id", "faultbrief.investigations.workspace_id"],
         ),
         CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_range"),
+        CheckConstraint(
+            "explanation_source IN ('rules', 'model', 'rules_fallback')", name="explanation_source"
+        ),
     )
     workspace_id: Mapped[UUID] = mapped_column()
     investigation_id: Mapped[UUID] = mapped_column()
     summary: Mapped[str] = mapped_column(Text)
     root_cause: Mapped[str | None] = mapped_column(Text)
     confidence: Mapped[float] = mapped_column(Float)
+    observed_facts: Mapped[list[str]] = mapped_column(
+        JSONB, default=list, server_default=text("'[]'::jsonb")
+    )
+    next_steps: Mapped[list[str]] = mapped_column(
+        JSONB, default=list, server_default=text("'[]'::jsonb")
+    )
+    explanation_source: Mapped[str] = mapped_column(
+        String(24), default="rules", server_default="rules"
+    )
     suggested_team: Mapped[str | None] = mapped_column(String(80))
     limitations: Mapped[list[str]] = mapped_column(
         JSONB, default=list, server_default=text("'[]'::jsonb")
