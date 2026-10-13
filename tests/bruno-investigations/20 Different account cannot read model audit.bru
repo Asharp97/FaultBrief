@@ -1,0 +1,28 @@
+meta {
+  name: 20 Different account cannot read model audit
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations/{{investigation_id}}/model-calls
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{outsider_token}}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("run_isolation") !== "true" && bru.getEnvVar("run_isolation") !== true) bru.runner.skipRequest();
+}
+
+tests {
+  test("Expected HTTP status", function () { expect(res.getStatus()).to.equal(404); });
+  test("Scoped model execution contract", function () { expect(res.getBody().detail).to.be.a("string"); });
+}
+
+docs {
+  Run after requests 01–17. The audit contains safe metadata and estimated reservations, not provider-measured billing. Request 20 uses the optional outsider token and run_isolation flag.
+}

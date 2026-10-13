@@ -28,33 +28,18 @@ class Collection:
     job: dict | None = None
     member: dict | None = None
     context_mismatch: bool = False
+    notes: list[str] = field(default_factory=list)
 
 
-def collect(
-    claim, tools: DiagnosticTools | None, error: DiagnosticError | None = None, *, progress=None
-) -> Collection:
-    result = Collection()
-    scope = tools.scope if tools else None
-    context = claim.context
-    if tools is None:
-        result.calls.append(
-            ToolCall(
-                id=uuid4(),
-                workspace_id=claim.workspace_id,
-                investigation_id=claim.investigation_id,
-                job_id=claim.job_id,
-                integration_id=None,
-                tool_name="resolve_customer",
-                state=ToolCallState.FAILED,
-                arguments_redacted={
-                    "customer_id": str(claim.customer_id),
-                    "code": error.code if error else "customer_not_connected",
-                },
-            )
-        )
-        return result
+class Collector:
+    def __init__(self, claim, tools, progress=None):
+        self.claim, self.tools, self.progress = claim, tools, progress
+        self.result = Collection()
 
-    def read(name, args):
+    def read(self, name, args):
+        claim = self.claim
+        result, tools, scope = self.result, self.tools, self.tools.scope
+        progress = self.progress
         if progress:
             progress("collecting", len(result.calls))
         output = tools.run(name, args)
@@ -74,6 +59,7 @@ def collect(
         result.results[name] = output
         result.references[name] = {}
         if output.state != "completed":
+            self.reconcile()
             return output
         rows = output.data.get("items", []) if name != "features" else [output.data]
         for row in rows:
@@ -114,40 +100,87 @@ def collect(
             )
             result.evidence.append(item)
             result.references[name][key] = item.id
+        self.reconcile()
         return output
 
-    read("features", {})
-    jobs = read("jobs", {"job_id": context["job_id"]} if context.get("job_id") else {"limit": 5})
-    job_rows = jobs.data.get("items", [])
-    filtered_jobs = [
-        row
-        for row in job_rows
-        if (not context.get("member_id") or row["member_id"] == context["member_id"])
-        and (not context.get("request_id") or row["request_id"] == context["request_id"])
-    ]
-    if context.get("job_id") and not filtered_jobs:
-        result.context_mismatch = True
-    result.job = filtered_jobs[0] if filtered_jobs else None
-    request_id = context.get("request_id") or (
-        result.job["request_id"] if context.get("job_id") and result.job else None
-    )
-    logs = read("logs", {"limit": 10, **({"request_id": request_id} if request_id else {})})
-    log_rows = [
-        row
-        for row in logs.data.get("items", [])
-        if row["event"] in ATTEMPT_EVENTS
-        and (not context.get("member_id") or row["member_id"] == context["member_id"])
-    ]
-    result.request = log_rows[0] if log_rows else None
-    if result.request:
-        result.job = next(
-            (row for row in filtered_jobs if row["request_id"] == result.request["request_id"]),
-            None,
+    def reconcile(self):
+        result, context = self.result, self.claim.context
+        jobs = result.results.get("jobs") or ToolResult(tool="jobs", state="failed")
+        job_rows = jobs.data.get("items", [])
+        filtered_jobs = [
+            row
+            for row in job_rows
+            if (not context.get("member_id") or row["member_id"] == context["member_id"])
+            and (not context.get("request_id") or row["request_id"] == context["request_id"])
+        ]
+        result.context_mismatch = bool(context.get("job_id") and not filtered_jobs)
+        result.job = filtered_jobs[0] if filtered_jobs else None
+        logs = result.results.get("logs") or ToolResult(tool="logs", state="failed")
+        log_rows = [
+            row
+            for row in logs.data.get("items", [])
+            if row["event"] in ATTEMPT_EVENTS
+            and (not context.get("member_id") or row["member_id"] == context["member_id"])
+            and (
+                not context.get("job_id")
+                or (result.job and row["request_id"] == result.job["request_id"])
+            )
+        ]
+        result.request = log_rows[0] if log_rows else None
+        if result.request:
+            result.job = next(
+                (row for row in filtered_jobs if row["request_id"] == result.request["request_id"]),
+                None,
+            )
+        member_id = context.get("member_id") or (result.request or result.job or {}).get(
+            "member_id"
         )
-    member_id = context.get("member_id") or (result.request or result.job or {}).get("member_id")
-    members = read("permissions", {"member_id": member_id} if member_id else {})
-    result.member = next(
-        (row for row in members.data.get("items", []) if row["id"] == member_id), None
-    )
-    read("runbooks", {})
-    return result
+        members = result.results.get("permissions") or ToolResult(
+            tool="permissions", state="failed"
+        )
+        result.member = next(
+            (row for row in members.data.get("items", []) if row["id"] == member_id), None
+        )
+
+    def arguments(self, name):
+        context, result = self.claim.context, self.result
+        if name == "jobs":
+            return {"job_id": context["job_id"]} if context.get("job_id") else {"limit": 5}
+        if name == "logs":
+            request_id = context.get("request_id") or (
+                result.job["request_id"] if context.get("job_id") and result.job else None
+            )
+            return {"limit": 10, **({"request_id": request_id} if request_id else {})}
+        if name == "permissions":
+            member_id = context.get("member_id") or (result.request or result.job or {}).get(
+                "member_id"
+            )
+            return {"member_id": member_id} if member_id else {}
+        return {}
+
+
+def collect(
+    claim, tools: DiagnosticTools | None, error: DiagnosticError | None = None, *, progress=None
+) -> Collection:
+    if tools is None:
+        result = Collection()
+        result.calls.append(
+            ToolCall(
+                id=uuid4(),
+                workspace_id=claim.workspace_id,
+                investigation_id=claim.investigation_id,
+                job_id=claim.job_id,
+                integration_id=None,
+                tool_name="resolve_customer",
+                state=ToolCallState.FAILED,
+                arguments_redacted={
+                    "customer_id": str(claim.customer_id),
+                    "code": error.code if error else "customer_not_connected",
+                },
+            )
+        )
+        return result
+    collector = Collector(claim, tools, progress)
+    for name in ("features", "jobs", "logs", "permissions", "runbooks"):
+        collector.read(name, collector.arguments(name))
+    return collector.result

@@ -12,7 +12,7 @@ class Finding:
 
 
 def diagnose(collection: Collection) -> Finding:
-    facts, limitations, evidence_ids = [], [], []
+    facts, limitations, evidence_ids = [], list(collection.notes), []
     features = collection.results.get("features")
     config = features.data if features and features.state == "completed" else None
     request, job, member = collection.request, collection.job, collection.member
@@ -123,7 +123,7 @@ def diagnose(collection: Collection) -> Finding:
         summary, confidence, team = (
             "The job and correlated request log identify a failed artifact write.",
             0.9,
-            "Platform support",
+            "Platform engineering",
         )
         limitations.append(
             "These records do not establish the underlying infrastructure reason for the "
@@ -154,6 +154,7 @@ def diagnose(collection: Collection) -> Finding:
             "The export timed out, but the available evidence does not establish why.",
             0.3,
         )
+        team = "Platform engineering"
         limitations.append("EXPORT_TIMEOUT is a symptom, not an established root cause.")
         next_steps = [
             "Collect downstream traces for the correlated request.",

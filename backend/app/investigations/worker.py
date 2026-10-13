@@ -16,15 +16,13 @@ from ..diagnostics.config import DiagnosticSettings
 from ..domain import InvestigationState, JobState, MembershipRole, transition_investigation
 from ..models import Investigation, Job, Membership
 from ..services import save_report
+from .budget import ModelBudget
 from .collect import collect
 from .config import InvestigationSettings
+from .control import WorkStopped
 from .explain import Explainer
 from .rules import diagnose
-
-
-class WorkStopped(Exception):
-    def __init__(self, status):
-        self.status = status
+from .runner import investigate
 
 
 @dataclass(frozen=True)
@@ -129,6 +127,7 @@ class Worker:
             if job.state == JobState.RUNNING:
                 job.last_error_code = "lease_expired"
             job.phase, job.completed_steps, job.heartbeat_at = "claimed", 0, now
+            job.investigation_mode, job.stop_reason = self.settings.investigation_mode, None
             job.state, job.attempts = JobState.RUNNING, job.attempts + 1
             job.lease_until = now + timedelta(seconds=self.settings.worker_lease_seconds)
             claim = Claim(
@@ -196,10 +195,25 @@ class Worker:
         def progress(phase, steps):
             self.checkpoint(claim, phase, steps)
 
-        collection = collect(claim, tools, error, progress=progress)
+        budget, stop_reason = None, None
+        if self.settings.investigation_mode == "model_selected" and tools:
+            budget = ModelBudget(self, claim)
+            tools.deadline = min(tools.deadline, budget.deadline)
+            collection, stop_reason = investigate(
+                claim, tools, self.settings, budget, self.explainer.transport, progress
+            )
+        else:
+            collection = collect(claim, tools, error, progress=progress)
         finding = diagnose(collection)
+        if stop_reason and stop_reason != "sufficient_evidence":
+            finding.report.limitations.append(
+                f"Investigation stopped: {stop_reason.replace('_', ' ')}."
+            )
         progress("explaining", len(collection.calls))
+        self.explainer.budget = budget
         report = self.explainer.explain(claim.question, finding.report, collection.evidence)
+        if budget and budget.stop_reason:
+            stop_reason = budget.stop_reason
         progress("publishing", len(collection.calls))
         with self.session_factory() as session:
             job = self.owned_job(session, claim)
@@ -218,6 +232,7 @@ class Worker:
             transition_investigation(investigation, finding.state)
             job.state, job.lease_until = JobState.COMPLETED, None
             job.phase, job.heartbeat_at = "completed", datetime.now(UTC)
+            job.stop_reason = stop_reason
             session.commit()
         return str(finding.state)
 

@@ -1,5 +1,4 @@
 import json
-import time
 from uuid import UUID
 
 import httpx2
@@ -9,6 +8,8 @@ from ..diagnostics.client import redact
 from ..models import Evidence
 from ..schemas import Citation, ReportDraft
 from .config import InvestigationSettings
+from .control import ModelLimit
+from .model_http import request_json
 
 
 class ExplanationError(Exception):
@@ -95,6 +96,7 @@ class Explainer:
     def __init__(self, settings: InvestigationSettings, *, transport=None):
         self.settings = settings
         self.transport = transport
+        self.budget = None
 
     def explain(
         self, question: str, baseline: ReportDraft, evidence: list[Evidence]
@@ -163,6 +165,7 @@ class Explainer:
             return validated_explanation(body, baseline, evidence)
         except (
             ExplanationError,
+            ModelLimit,
             ValidationError,
             ValueError,
             KeyError,
@@ -186,31 +189,4 @@ class Explainer:
         )
 
     def _request(self, payload):
-        settings = self.settings
-        deadline = time.monotonic() + settings.model_timeout_seconds
-        with httpx2.Client(
-            trust_env=False, follow_redirects=False, transport=self.transport
-        ) as client:
-            with client.stream(
-                "POST",
-                settings.model_endpoint,
-                json=payload,
-                timeout=settings.model_timeout_seconds,
-                headers={
-                    "Authorization": f"Bearer {settings.ai_provider_api_key.get_secret_value()}",
-                    "Accept": "application/json",
-                    "Accept-Encoding": "identity",
-                },
-            ) as response:
-                if (
-                    response.status_code != 200
-                    or "application/json" not in response.headers.get("content-type", "")
-                    or response.headers.get("content-encoding", "identity") != "identity"
-                ):
-                    raise ExplanationError("Model response unavailable.")
-                content = bytearray()
-                for chunk in response.iter_raw(chunk_size=8192):
-                    content.extend(chunk)
-                    if len(content) > 65536 or time.monotonic() >= deadline:
-                        raise ExplanationError("Model response exceeded its limits.")
-                return json.loads(content)
+        return request_json(self.settings, payload, self.transport, budget=self.budget)

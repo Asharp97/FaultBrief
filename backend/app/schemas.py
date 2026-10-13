@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -145,6 +146,10 @@ class JobRead(RecordRead):
     completed_steps: int
     heartbeat_at: datetime | None
     last_error_code: str | None
+    investigation_mode: Literal["baseline", "model_selected"]
+    stop_reason: str | None
+    model_call_count: int
+    reserved_model_cost_usd: Decimal
 
 
 class ToolCallRead(RecordRead):
@@ -217,3 +222,17 @@ class FeedbackRead(RecordRead):
     user_id: UUID
     rating: FeedbackRating
     comment: str | None
+
+
+class ModelCallRead(RecordRead):
+    workspace_id: UUID
+    investigation_id: UUID
+    job_id: UUID
+    attempt: int
+    sequence: int
+    purpose: Literal["planner", "explainer"]
+    state: Literal["reserved", "succeeded", "failed"]
+    input_token_estimate: int
+    max_completion_tokens: int
+    reserved_cost_usd: Decimal
+    error_code: str | None

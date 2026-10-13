@@ -58,6 +58,14 @@ test.describe("real investigation worker", () => {
         await context.request.get(`/api/faultbrief/workspaces/${wid}/investigations`)
       ).json();
       const iid = cases.items[0].id;
+      await expect(panel.getByLabel("Investigation routing")).toContainText(
+        "Model selected checks",
+      );
+      const modelAudit = await context.request.get(
+        `/api/faultbrief/workspaces/${wid}/investigations/${iid}/model-calls`,
+      );
+      expect(modelAudit.status()).toBe(200);
+      expect((await modelAudit.json()).items.length).toBeGreaterThan(0);
       const outsider = await browser.newContext({ baseURL: test.info().project.use.baseURL });
       try {
         await outsider.request.post("/api/auth/sign-in/email", {
@@ -71,6 +79,13 @@ test.describe("real investigation worker", () => {
           (
             await outsider.request.get(
               `/api/faultbrief/workspaces/${wid}/investigations/${iid}/report`,
+            )
+          ).status(),
+        ).toBe(404);
+        expect(
+          (
+            await outsider.request.get(
+              `/api/faultbrief/workspaces/${wid}/investigations/${iid}/model-calls`,
             )
           ).status(),
         ).toBe(404);

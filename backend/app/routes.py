@@ -16,6 +16,7 @@ from .models import (
     Investigation,
     Job,
     Membership,
+    ModelCall,
     Report,
     ReportCitation,
     ToolCall,
@@ -37,6 +38,7 @@ from .schemas import (
     MembershipCreate,
     MembershipRead,
     MembershipUpdate,
+    ModelCallRead,
     Page,
     ReportRead,
     ToolCallRead,
@@ -450,3 +452,26 @@ def create_feedback(
     session.add(feedback)
     session.commit()
     return feedback
+
+
+@router.get(
+    "/workspaces/{workspace_id}/investigations/{investigation_id}/model-calls",
+    response_model=Page[ModelCallRead],
+    tags=["investigations"],
+)
+def list_model_calls(
+    workspace_id: UUID,
+    investigation_id: UUID,
+    principal: Identity,
+    session: DB,
+    limit: Limit = 50,
+    offset: Offset = 0,
+):
+    workspace_membership(session, principal, workspace_id)
+    scoped_investigation(session, workspace_id, investigation_id)
+    return page(
+        session,
+        scoped_rows(ModelCall, workspace_id, investigation_id).order_by(ModelCall.sequence),
+        limit,
+        offset,
+    )

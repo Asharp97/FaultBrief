@@ -63,7 +63,7 @@ The two new membership operations are included in the 116-request collection and
 
 ## Endpoint coverage
 
-All **20 application operations** in `docs/api/openapi.json` have requests. Additional requests cover FastAPI documentation and the demo service's health endpoint. [coverage.json](coverage.json) maps every request to its method, contract path, expected status, and optional flag.
+The **20 foundation operations** have requests here. The added model-audit operation and completed worker workflow are covered by [the investigation collection](../bruno-investigations/README.md). Additional requests cover FastAPI documentation and the demo service's health endpoint. [coverage.json](coverage.json) maps every request to its method, contract path, expected status, and optional flag.
 
 | Method | Path suffix under `/v1/workspaces/{workspace_id}`                 | Primary folder      |
 | ------ | ----------------------------------------------------------------- | ------------------- |

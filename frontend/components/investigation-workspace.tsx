@@ -37,6 +37,18 @@ type Job = {
   max_attempts: number;
   available_at: string;
   last_error_code: string | null;
+  investigation_mode: "baseline" | "model_selected";
+  stop_reason: string | null;
+  model_call_count: number;
+  reserved_model_cost_usd: string;
+};
+type ModelCall = {
+  id: string;
+  sequence: number;
+  purpose: string;
+  state: string;
+  reserved_cost_usd: string;
+  error_code: string | null;
 };
 
 async function read(response: Response) {
@@ -60,6 +72,7 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [checks, setChecks] = useState<Check[]>([]);
   const [job, setJob] = useState<Job | null>(null);
+  const [modelCalls, setModelCalls] = useState<ModelCall[]>([]);
   const submission = useRef<{ payload: string; id: string } | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -94,6 +107,7 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
     setEvidence([]);
     setChecks([]);
     setJob(null);
+    setModelCalls([]);
     setMessage("");
     pollingDeadline.current = Date.now() + 120000;
   }, []);
@@ -121,16 +135,20 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
             );
           return;
         }
-        const [records, calls] = await Promise.all([
+        const [records, calls, models] = await Promise.all([
           fetch(`${base}/investigations/${selected}/evidence?limit=100`, {
             signal: controller.signal,
           }).then(read),
           fetch(`${base}/investigations/${selected}/tool-calls?limit=100`, {
             signal: controller.signal,
           }).then(read),
+          fetch(`${base}/investigations/${selected}/model-calls?limit=100`, {
+            signal: controller.signal,
+          }).then(read),
         ]);
         setEvidence(records.items);
         setChecks(calls.items);
+        setModelCalls(models.items);
         if (current.state !== "failed") {
           setReport(
             await read(
@@ -322,6 +340,13 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
               to review the service.
             </p>
           )}
+          {job?.investigation_mode === "model_selected" && (
+            <p className="account-muted" aria-label="Investigation routing">
+              Model selected checks · {job.model_call_count} model requests · reserved estimate $
+              {job.reserved_model_cost_usd}
+              {job.stop_reason && <> · {job.stop_reason.replaceAll("_", " ")}</>}
+            </p>
+          )}
           {report && (
             <article aria-label="Investigation report">
               <h3>{report.root_cause || "No root cause established"}</h3>
@@ -375,6 +400,20 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
                 ))}
               </ul>
             </article>
+          )}
+          {modelCalls.length > 0 && (
+            <details>
+              <summary>Model request audit ({modelCalls.length})</summary>
+              <ul>
+                {modelCalls.map((call) => (
+                  <li key={call.id}>
+                    {call.sequence}. {call.purpose}: {call.state} · reserved estimate $
+                    {call.reserved_cost_usd}
+                    {call.error_code && <> · {call.error_code.replaceAll("_", " ")}</>}
+                  </li>
+                ))}
+              </ul>
+            </details>
           )}
           {checks.length > 0 && (
             <details>

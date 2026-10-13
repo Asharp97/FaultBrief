@@ -27,6 +27,8 @@ Records use UUID keys and timezone-aware timestamps. Composite foreign keys enfo
 
 Roles are `owner`, `admin`, `support`, and `viewer`. Owners/admins configure integration metadata; owners/admins/support create customers and investigations. Active viewers can read and submit report feedback. Membership role and revocation are read from the database, not a role asserted in a JWT or request body. Membership removal is currently represented by an inactive record, preserving authorship history.
 
+The optional `model_calls` ledger records model-request reservations and safe outcomes, scoped to the same job/investigation/workspace. See [bounded investigations](bounded-investigations.md).
+
 ## Investigation lifecycle
 
 | State          | Meaning                                                          | Allowed next state                    |
@@ -68,6 +70,8 @@ See [the exported OpenAPI contract](api/openapi.json), or start the backend and 
 List responses contain `items`, `limit`, and `offset`. Limit is 1–100; offset is 0–10,000. All request objects forbid extra fields. Tickets optionally accept a replay-safe `submission_id` UUID ([details](reliable-processing.md)) and `context` with affected `member_id`, `job_id`, and `request_id` UUIDs. Investigation lists are newest-first with a stable ID tie-breaker. Reports add `observed_facts`, `next_steps`, and `explanation_source` (`rules`, `model`, or `rules_fallback`); migration 0002 adds their storage. See the [baseline workflow](baseline-investigation.md). `401` means invalid/missing identity, `403` insufficient role, `404` unknown or inaccessible scope, `409` a resource/relationship conflict, `422` invalid input, and `503` unavailable/unconfigured dependencies. Database errors do not return SQL parameters or credentials.
 
 `ReportDraft` is the strict internal output contract for model explanations. Confidence must be a finite number between 0 and 1; a root-cause claim requires unique citations. The report persistence service checks that every cited evidence ID belongs to the case. Confidence is a declared score, not a calibrated probability; evaluation will determine how useful it is.
+
+The scoped `GET .../investigations/{investigation_id}/model-calls` route lists the bounded-model audit. Job reads expose progress, model-request counts, reserved cost estimates, and stop reasons.
 
 ## Neon configuration and authentication
 

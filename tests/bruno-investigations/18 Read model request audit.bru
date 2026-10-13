@@ -1,0 +1,25 @@
+meta {
+  name: 18 Read model request audit
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations/{{investigation_id}}/model-calls
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Expected HTTP status", function () { expect(res.getStatus()).to.equal(200); });
+  test("Scoped model execution contract", function () { bru.setVar("model_audit", res.getBody().items);
+    res.getBody().items.forEach(function (item) { expect(item.investigation_id).to.equal(bru.getVar("investigation_id")); expect(["reserved", "succeeded", "failed"]).to.include(item.state); expect(Number(item.reserved_cost_usd)).to.be.at.least(0); }); });
+}
+
+docs {
+  Run after requests 01–17. The audit contains safe metadata and estimated reservations, not provider-measured billing. Request 20 uses the optional outsider token and run_isolation flag.
+}

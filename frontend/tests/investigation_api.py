@@ -60,7 +60,41 @@ diagnostics = DiagnosticSettings(
 
 
 def model(request):
-    context = json.loads(json.loads(request.content)["messages"][1]["content"])
+    payload = json.loads(request.content)
+    context = json.loads(payload["messages"][1]["content"])
+    if "tools" in payload:
+        actions = {item["action_id"] for item in context["available_actions"]}
+        action = next(
+            name
+            for name in ("logs", "features", "permissions", "jobs", "runbooks")
+            if name in actions
+        )
+        choice = {
+            "choices": [
+                {
+                    "finish_reason": "tool_calls",
+                    "message": {
+                        "tool_calls": [
+                            {
+                                "id": "synthetic-call",
+                                "type": "function",
+                                "function": {
+                                    "name": "choose_diagnostic_step",
+                                    "arguments": json.dumps(
+                                        {"action_id": action, "stop_reason": "continue"}
+                                    ),
+                                },
+                            }
+                        ]
+                    },
+                }
+            ]
+        }
+        return httpx2.Response(
+            200,
+            headers={"Content-Type": "application/json"},
+            stream=httpx2.ByteStream(json.dumps(choice).encode()),
+        )
     report = context["baseline"]
     report["summary"] = "AI explanation: " + report["summary"]
     return httpx2.Response(
@@ -83,6 +117,9 @@ worker = Worker(
     InvestigationSettings(
         _env_file=None,
         faultbrief_environment="test",
+        investigation_mode="model_selected",
+        model_input_usd_per_million="0",
+        model_output_usd_per_million="0",
         model_provider="openai-compatible",
         model_name="synthetic-explainer",
         ai_provider_api_key="synthetic-model-key",

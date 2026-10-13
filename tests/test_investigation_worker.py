@@ -125,14 +125,17 @@ def harness(db_session, postgres_engine, tmp_path):
             assert ticket.status_code == 201, ticket.text
             return ticket.json()["id"], record
 
-        def worker(model_transport=None, enabled=False):
+        def worker(model_transport=None, enabled=False, **overrides):
             return Worker(
                 postgres_engine,
                 InvestigationSettings(
                     _env_file=None,
-                    model_provider="openai-compatible" if enabled else None,
-                    model_name="synthetic-explainer" if enabled else None,
-                    ai_provider_api_key="synthetic-model-key" if enabled else None,
+                    **{
+                        "model_provider": "openai-compatible" if enabled else None,
+                        "model_name": "synthetic-explainer" if enabled else None,
+                        "ai_provider_api_key": "synthetic-model-key" if enabled else None,
+                        **overrides,
+                    },
                 ),
                 config,
                 tool_transport=transport,

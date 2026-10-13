@@ -2166,6 +2166,138 @@
         }
       }
     },
+    "/v1/workspaces/{workspace_id}/investigations/{investigation_id}/model-calls": {
+      "get": {
+        "tags": [
+          "investigations"
+        ],
+        "summary": "List Model Calls",
+        "operationId": "list_model_calls_v1_workspaces__workspace_id__investigations__investigation_id__model_calls_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "investigation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Investigation Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ModelCallRead_"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -2861,6 +2993,33 @@
               }
             ],
             "title": "Last Error Code"
+          },
+          "investigation_mode": {
+            "type": "string",
+            "enum": [
+              "baseline",
+              "model_selected"
+            ],
+            "title": "Investigation Mode"
+          },
+          "stop_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Reason"
+          },
+          "model_call_count": {
+            "type": "integer",
+            "title": "Model Call Count"
+          },
+          "reserved_model_cost_usd": {
+            "type": "string",
+            "title": "Reserved Model Cost Usd"
           }
         },
         "additionalProperties": false,
@@ -2879,7 +3038,11 @@
           "phase",
           "completed_steps",
           "heartbeat_at",
-          "last_error_code"
+          "last_error_code",
+          "investigation_mode",
+          "stop_reason",
+          "model_call_count",
+          "reserved_model_cost_usd"
         ],
         "title": "JobRead"
       },
@@ -2997,6 +3160,107 @@
         "additionalProperties": false,
         "type": "object",
         "title": "MembershipUpdate"
+      },
+      "ModelCallRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id"
+          },
+          "investigation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Investigation Id"
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "attempt": {
+            "type": "integer",
+            "title": "Attempt"
+          },
+          "sequence": {
+            "type": "integer",
+            "title": "Sequence"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "planner",
+              "explainer"
+            ],
+            "title": "Purpose"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "reserved",
+              "succeeded",
+              "failed"
+            ],
+            "title": "State"
+          },
+          "input_token_estimate": {
+            "type": "integer",
+            "title": "Input Token Estimate"
+          },
+          "max_completion_tokens": {
+            "type": "integer",
+            "title": "Max Completion Tokens"
+          },
+          "reserved_cost_usd": {
+            "type": "string",
+            "title": "Reserved Cost Usd"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "workspace_id",
+          "investigation_id",
+          "job_id",
+          "attempt",
+          "sequence",
+          "purpose",
+          "state",
+          "input_token_estimate",
+          "max_completion_tokens",
+          "reserved_cost_usd",
+          "error_code"
+        ],
+        "title": "ModelCallRead"
       },
       "Page_CustomerRead_": {
         "properties": {
@@ -3159,6 +3423,33 @@
           "offset"
         ],
         "title": "Page[MembershipRead]"
+      },
+      "Page_ModelCallRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ModelCallRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[ModelCallRead]"
       },
       "Page_ToolCallRead_": {
         "properties": {

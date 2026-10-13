@@ -59,3 +59,7 @@ The minimal dashboard lists up to 100 affected customers and 50 recent investiga
 ## Submission replay and progress
 
 Migration 0003 adds replay-safe submissions and durable worker progress. See [reliable processing](reliable-processing.md) for setup, API fields, restart recovery, and limits.
+
+## Optional model-selected checks
+
+Migration 0004 adds the model-request audit and durable budget reservations. See [bounded investigations](bounded-investigations.md) for opt-in configuration, stop rules, dispatch recommendations, and test coverage.

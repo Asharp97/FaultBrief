@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID, uuid4
 
@@ -13,6 +14,7 @@ from sqlalchemy import (
     Index,
     Integer,
     MetaData,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -172,6 +174,12 @@ class Job(Record, Base):
             "'retry_wait', 'completed', 'failed')",
             name="progress_phase",
         ),
+        CheckConstraint(
+            "model_call_count >= 0 AND reserved_model_cost_usd >= 0", name="model_budget"
+        ),
+        CheckConstraint(
+            "investigation_mode IN ('baseline', 'model_selected')", name="investigation_mode"
+        ),
         Index("ix_jobs_state_available", "state", "available_at"),
     )
     workspace_id: Mapped[UUID] = mapped_column()
@@ -189,6 +197,14 @@ class Job(Record, Base):
     completed_steps: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_error_code: Mapped[str | None] = mapped_column(String(40))
+    investigation_mode: Mapped[str] = mapped_column(
+        String(24), default="baseline", server_default="baseline"
+    )
+    stop_reason: Mapped[str | None] = mapped_column(String(40))
+    model_call_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    reserved_model_cost_usd: Mapped[Decimal] = mapped_column(
+        Numeric(12, 6), default=Decimal("0"), server_default="0"
+    )
 
 
 class ToolCall(Record, Base):
@@ -333,3 +349,36 @@ class Feedback(Record, Base):
     user_id: Mapped[UUID] = mapped_column()
     rating: Mapped[FeedbackRating] = mapped_column(enum_type(FeedbackRating, "feedback_rating"))
     comment: Mapped[str | None] = mapped_column(Text)
+
+
+class ModelCall(Record, Base):
+    __tablename__ = "model_calls"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["job_id", "investigation_id", "workspace_id"],
+            [
+                "faultbrief.jobs.id",
+                "faultbrief.jobs.investigation_id",
+                "faultbrief.jobs.workspace_id",
+            ],
+        ),
+        UniqueConstraint("job_id", "sequence"),
+        CheckConstraint("purpose IN ('planner', 'explainer')", name="purpose"),
+        CheckConstraint("state IN ('reserved', 'succeeded', 'failed')", name="state"),
+        CheckConstraint(
+            "attempt > 0 AND sequence > 0 AND input_token_estimate >= 0 "
+            "AND max_completion_tokens > 0 AND reserved_cost_usd >= 0",
+            name="budget_limits",
+        ),
+    )
+    workspace_id: Mapped[UUID] = mapped_column()
+    investigation_id: Mapped[UUID] = mapped_column()
+    job_id: Mapped[UUID] = mapped_column()
+    attempt: Mapped[int] = mapped_column(Integer)
+    sequence: Mapped[int] = mapped_column(Integer)
+    purpose: Mapped[str] = mapped_column(String(24))
+    state: Mapped[str] = mapped_column(String(24))
+    input_token_estimate: Mapped[int] = mapped_column(Integer)
+    max_completion_tokens: Mapped[int] = mapped_column(Integer)
+    reserved_cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6))
+    error_code: Mapped[str | None] = mapped_column(String(40))
