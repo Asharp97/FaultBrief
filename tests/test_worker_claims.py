@@ -59,3 +59,58 @@ def test_parallel_workers_claim_different_jobs_on_real_connections(postgres_engi
                 connection.execute(delete(model).where(model.workspace_id == wid))
             connection.execute(delete(Workspace).where(Workspace.id == wid))
             connection.execute(delete(User).where(User.id == uid))
+
+
+def test_concurrent_submission_replays_create_only_one_job(postgres_engine):
+    from sqlalchemy import func, select
+
+    from backend.app.schemas import InvestigationCreate
+    from backend.app.services import enqueue_investigation
+
+    wid, uid, cid = uuid4(), uuid4(), uuid4()
+    try:
+        with Session(postgres_engine) as session:
+            session.add_all(
+                [
+                    Workspace(id=wid, name="Replay lab"),
+                    User(id=uid, auth_issuer="https://auth.invalid", auth_subject=str(uid)),
+                ]
+            )
+            session.flush()
+            session.add_all(
+                [
+                    Membership(workspace_id=wid, user_id=uid, role=MembershipRole.OWNER),
+                    Customer(id=cid, workspace_id=wid, name="Customer", external_id=str(cid)),
+                ]
+            )
+            session.commit()
+        body = InvestigationCreate(
+            customer_id=cid, question="Why did exports fail?", submission_id=uuid4()
+        )
+
+        def submit():
+            with Session(postgres_engine, expire_on_commit=False) as session:
+                item = enqueue_investigation(session, wid, uid, body)
+                session.commit()
+                return item.id
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(submit) for _ in range(2)]
+            ids = [future.result(timeout=15) for future in futures]
+        assert ids[0] == ids[1]
+        with Session(postgres_engine) as session:
+            assert (
+                session.scalar(select(func.count()).select_from(Job).where(Job.workspace_id == wid))
+                == 1
+            )
+            other = enqueue_investigation(
+                session, wid, uid, body.model_copy(update={"submission_id": uuid4()})
+            )
+            session.commit()
+            assert other.id != ids[0]
+    finally:
+        with postgres_engine.begin() as connection:
+            for model in (Job, Investigation, Customer, Membership):
+                connection.execute(delete(model).where(model.workspace_id == wid))
+            connection.execute(delete(Workspace).where(Workspace.id == wid))
+            connection.execute(delete(User).where(User.id == uid))

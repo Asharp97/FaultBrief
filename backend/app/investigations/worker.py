@@ -22,6 +22,11 @@ from .explain import Explainer
 from .rules import diagnose
 
 
+class WorkStopped(Exception):
+    def __init__(self, status):
+        self.status = status
+
+
 @dataclass(frozen=True)
 class Claim:
     job_id: UUID
@@ -67,8 +72,10 @@ class Worker:
         return session.scalar(query) is not None
 
     @staticmethod
-    def fail(job, investigation):
+    def fail(job, investigation, code="requester_unavailable"):
         job.state, job.lease_until = JobState.FAILED, None
+        job.phase, job.last_error_code = "failed", code
+        job.heartbeat_at = datetime.now(UTC)
         if investigation.state in {InvestigationState.QUEUED, InvestigationState.RUNNING}:
             transition_investigation(investigation, InvestigationState.FAILED)
 
@@ -105,13 +112,23 @@ class Worker:
                 or not self.eligible(session, investigation)
             ):
                 if investigation is not None:
-                    self.fail(job, investigation)
+                    self.fail(
+                        job,
+                        investigation,
+                        "attempts_exhausted"
+                        if job.attempts >= job.max_attempts
+                        else "requester_unavailable",
+                    )
                 else:
                     job.state, job.lease_until = JobState.FAILED, None
+                    job.phase, job.last_error_code = "failed", "investigation_unavailable"
                 session.commit()
                 return "failed"
             if investigation.state == InvestigationState.QUEUED:
                 transition_investigation(investigation, InvestigationState.RUNNING, now)
+            if job.state == JobState.RUNNING:
+                job.last_error_code = "lease_expired"
+            job.phase, job.completed_steps, job.heartbeat_at = "claimed", 0, now
             job.state, job.attempts = JobState.RUNNING, job.attempts + 1
             job.lease_until = now + timedelta(seconds=self.settings.worker_lease_seconds)
             claim = Claim(
@@ -135,9 +152,24 @@ class Worker:
                 Job.state == JobState.RUNNING,
                 Job.attempts == claim.attempt,
                 Job.lease_until == claim.lease_until,
+                Job.lease_until > datetime.now(UTC),
             )
             .with_for_update()
         )
+
+    def checkpoint(self, claim, phase, steps):
+        with self.session_factory() as session:
+            job = self.owned_job(session, claim)
+            if job is None:
+                raise WorkStopped("superseded")
+            investigation = session.get(Investigation, claim.investigation_id)
+            if not self.eligible(session, investigation, lock=True):
+                self.fail(job, investigation)
+                session.commit()
+                raise WorkStopped("failed")
+            job.phase, job.completed_steps = phase, steps
+            job.heartbeat_at = datetime.now(UTC)
+            session.commit()
 
     def process(self, claim):
         tools, error = None, None
@@ -160,9 +192,15 @@ class Worker:
             tools = DiagnosticTools(scope, self.diagnostic_settings, transport=self.tool_transport)
         except DiagnosticError as failure:
             error = failure
-        collection = collect(claim, tools, error)
+
+        def progress(phase, steps):
+            self.checkpoint(claim, phase, steps)
+
+        collection = collect(claim, tools, error, progress=progress)
         finding = diagnose(collection)
+        progress("explaining", len(collection.calls))
         report = self.explainer.explain(claim.question, finding.report, collection.evidence)
+        progress("publishing", len(collection.calls))
         with self.session_factory() as session:
             job = self.owned_job(session, claim)
             if job is None:
@@ -179,20 +217,25 @@ class Worker:
             save_report(session, investigation, report)
             transition_investigation(investigation, finding.state)
             job.state, job.lease_until = JobState.COMPLETED, None
+            job.phase, job.heartbeat_at = "completed", datetime.now(UTC)
             session.commit()
         return str(finding.state)
 
-    def retry(self, claim):
+    def retry(self, claim, code="processing_error"):
         with self.session_factory() as session:
             job = self.owned_job(session, claim)
             if job is None:
                 return "superseded"
             investigation = session.get(Investigation, claim.investigation_id)
+            job.last_error_code, job.heartbeat_at = code, datetime.now(UTC)
             if job.attempts >= job.max_attempts:
-                self.fail(job, investigation)
+                self.fail(job, investigation, code)
             else:
                 job.state, job.lease_until = JobState.QUEUED, None
-                job.available_at = datetime.now(UTC) + timedelta(seconds=5 * job.attempts)
+                job.phase = "retry_wait"
+                job.available_at = datetime.now(UTC) + timedelta(
+                    seconds=min(60, 5 * 2 ** (job.attempts - 1))
+                )
             session.commit()
             return "retry_queued" if job.state == JobState.QUEUED else "failed"
 
@@ -202,7 +245,11 @@ class Worker:
             return claim
         try:
             return self.process(claim)
-        except (SQLAlchemyError, ValueError, TypeError, AttributeError, RuntimeError, OSError):
+        except WorkStopped as stopped:
+            return stopped.status
+        except SQLAlchemyError:
+            return self.retry(claim, "database_error")
+        except (ValueError, TypeError, AttributeError, RuntimeError, OSError):
             return self.retry(claim)
 
 

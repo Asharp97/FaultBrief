@@ -55,3 +55,7 @@ The minimal dashboard lists up to 100 affected customers and 50 recent investiga
 ## Verification
 
 `pnpm run check` covers migrations, scoped diagnostics, rules, model failure/validation paths, transactional rollback, expired leases, exhausted jobs, and parallel claims. With a disposable loopback `FAULTBRIEF_TEST_DATABASE_URL`, `pnpm run frontend:e2e` exercises the real FastAPI/worker/PostgreSQL/Ledger pipeline through the dashboard, with synthetic auth and model responses. CI requires that database. Without it, the three investigation browser cases are skipped while existing auth/demo tests still run. Automated tests neither create real Neon users nor call a paid model.
+
+## Submission replay and progress
+
+Migration 0003 adds replay-safe submissions and durable worker progress. See [reliable processing](reliable-processing.md) for setup, API fields, restart recovery, and limits.

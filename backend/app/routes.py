@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from .auth import Principal, require_principal
 from .database import get_session
-from .domain import InvestigationState, MembershipRole
+from .domain import MembershipRole
 from .models import (
     Customer,
     Evidence,
@@ -45,6 +45,7 @@ from .schemas import (
     WorkspaceRead,
 )
 from .services import (
+    enqueue_investigation,
     provision_user,
     require_owner_workspace,
     require_writer,
@@ -278,17 +279,7 @@ def create_investigation(
     )
     if customer is None:
         raise HTTPException(404, "Customer not found.")
-    investigation = Investigation(
-        workspace_id=workspace_id,
-        customer_id=customer.id,
-        created_by_user_id=membership.user_id,
-        question=body.question,
-        context=body.context.model_dump(mode="json", exclude_none=True),
-        state=InvestigationState.QUEUED,
-    )
-    session.add(investigation)
-    session.flush()
-    session.add(Job(workspace_id=workspace_id, investigation_id=investigation.id))
+    investigation = enqueue_investigation(session, workspace_id, membership.user_id, body)
     session.commit()
     return investigation
 

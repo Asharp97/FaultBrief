@@ -93,3 +93,55 @@ test.describe("real investigation worker", () => {
     });
   }
 });
+
+test("retrying a lost ticket response creates one investigation", async ({ page, context }) => {
+  test.skip(!process.env.FAULTBRIEF_TEST_DATABASE_URL, "Requires disposable PostgreSQL.");
+  await page.goto("/auth/sign-in");
+  await page.getByLabel("Email address").fill("retry-investigator@example.invalid");
+  await page.getByLabel("Password", { exact: true }).fill("synthetic-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.getByLabel("Company or workspace name").fill("Submission retry lab");
+  await page.getByRole("button", { name: "Create workspace", exact: true }).click();
+  await expect(page.getByText("Submission retry lab", { exact: true })).toBeVisible();
+  const workspaces = await (await context.request.get("/api/faultbrief/workspaces")).json();
+  const wid = workspaces.items.find(
+    (item: { name: string }) => item.name === "Submission retry lab",
+  ).id;
+  const jwt = (await (await context.request.get("/api/auth/token")).json()).token;
+  const seed = await context.request.post("http://127.0.0.1:58113/test/seed", {
+    headers: { Authorization: `Bearer ${jwt}` },
+    data: { workspace_id: wid, scenario: "feature_disabled" },
+  });
+  expect(seed.status()).toBe(200);
+  await page.getByRole("button", { name: "Investigate Submission retry lab", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Investigations for Submission retry lab" });
+  await panel.getByLabel("Affected customer").selectOption((await seed.json()).customer_id);
+  await panel.getByLabel("What went wrong?").fill("Why did the customer export fail?");
+  let first = true;
+  await page.route(`**/api/faultbrief/workspaces/${wid}/investigations`, async (route) => {
+    if (route.request().method() === "POST" && first) {
+      first = false;
+      const response = await route.fetch();
+      expect(response.status()).toBe(201);
+      await route.abort("failed");
+    } else await route.continue();
+  });
+  await panel.getByRole("button", { name: "Investigate ticket", exact: true }).click();
+  await expect(panel.getByRole("status")).toBeVisible();
+  await panel.getByRole("button", { name: "Investigate ticket", exact: true }).click();
+  await expect(panel.getByRole("article", { name: "Investigation report" })).toBeVisible({
+    timeout: 30000,
+  });
+  await expect(panel.getByLabel("Investigation progress")).toContainText("completed");
+  const cases = await (
+    await context.request.get(`/api/faultbrief/workspaces/${wid}/investigations`)
+  ).json();
+  expect(cases.items).toHaveLength(1);
+  const jobs = await (
+    await context.request.get(
+      `/api/faultbrief/workspaces/${wid}/investigations/${cases.items[0].id}/jobs`,
+    )
+  ).json();
+  expect(jobs.items).toHaveLength(1);
+});

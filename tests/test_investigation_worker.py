@@ -438,3 +438,143 @@ def test_revocation_during_collection_prevents_report_publication(harness):
         )
         == 0
     )
+
+
+def test_submission_replay_returns_one_case_and_job_even_after_completion(harness):
+    iid, _ = harness.case("feature_disabled")
+    original = harness.db.get(Investigation, UUID(iid))
+    payload = {
+        "customer_id": str(original.customer_id),
+        "question": original.question,
+        "context": original.context,
+        "submission_id": str(uuid4()),
+    }
+    endpoint = f"/v1/workspaces/{harness.workspace}/investigations"
+    first = harness.owner.post(endpoint, json=payload)
+    assert first.status_code == 201
+    assert harness.owner.post(endpoint, json=payload).json()["id"] == first.json()["id"]
+    worker = harness.worker()
+    assert worker.run_once() == "completed"
+    assert worker.run_once() == "completed"
+    replay = harness.owner.post(endpoint, json=payload)
+    assert replay.json()["id"] == first.json()["id"] and replay.json()["state"] == "completed"
+    assert (
+        harness.db.scalar(
+            select(func.count())
+            .select_from(Job)
+            .where(Job.investigation_id == UUID(first.json()["id"]))
+        )
+        == 1
+    )
+    changed = harness.owner.post(
+        endpoint, json={**payload, "question": "A different problem happened."}
+    )
+    assert changed.status_code == 409
+    assert (
+        harness.owner.post(endpoint, json={**payload, "submission_id": "invalid"}).status_code
+        == 422
+    )
+
+
+def test_worker_restart_recovers_committed_progress_after_interrupted_collection(harness):
+    iid, _ = harness.case("feature_disabled")
+    first = harness.worker()
+    checkpoint = first.checkpoint
+
+    def crash(claim, phase, steps):
+        checkpoint(claim, phase, steps)
+        if phase == "collecting" and steps == 1:
+            raise SystemExit("Simulated process termination")
+
+    first.checkpoint = crash
+    with pytest.raises(SystemExit):
+        first.run_once()
+    base = f"/v1/workspaces/{harness.workspace}/investigations/{iid}"
+    progress = harness.owner.get(base + "/jobs").json()["items"][0]
+    assert progress["phase"] == "collecting" and progress["completed_steps"] == 1
+    assert progress["heartbeat_at"] and progress["attempts"] == 1
+    assert harness.owner.get(base + "/report").status_code == 404
+    job = harness.db.get(Job, UUID(progress["id"]))
+    job.lease_until = datetime.now(UTC) - timedelta(seconds=1)
+    harness.db.commit()
+    assert harness.worker().run_once() == "completed"
+    progress = harness.owner.get(base + "/jobs").json()["items"][0]
+    assert progress["phase"] == "completed" and progress["completed_steps"] == 5
+    assert progress["attempts"] == 2 and progress["last_error_code"] == "lease_expired"
+    assert (
+        harness.db.scalar(
+            select(func.count()).select_from(Report).where(Report.investigation_id == UUID(iid))
+        )
+        == 1
+    )
+
+
+def test_expired_lease_blocks_original_worker_before_another_worker_claims(harness):
+    iid, _ = harness.case("healthy")
+    worker = harness.worker()
+    claim = worker.claim()
+    job = harness.db.get(Job, claim.job_id)
+    job.lease_until = datetime.now(UTC) - timedelta(seconds=1)
+    harness.db.commit()
+    before = len(harness.seen)
+    assert worker.process(claim) == "superseded" and len(harness.seen) == before
+    assert (
+        harness.owner.get(
+            f"/v1/workspaces/{harness.workspace}/investigations/{iid}/report"
+        ).status_code
+        == 404
+    )
+
+
+def test_retry_records_safe_code_and_exhaustion_is_visible(harness, monkeypatch):
+    iid, _ = harness.case("healthy")
+
+    def reject(*args):
+        raise RuntimeError("password=private-secret DB_URL=private-connection")
+
+    monkeypatch.setattr("backend.app.investigations.worker.save_report", reject)
+    worker = harness.worker()
+    base = f"/v1/workspaces/{harness.workspace}/investigations/{iid}"
+    for attempt in range(1, 4):
+        before = datetime.now(UTC)
+        assert worker.run_once() == ("failed" if attempt == 3 else "retry_queued")
+        data = harness.owner.get(base + "/jobs")
+        assert "private-secret" not in data.text and "private-connection" not in data.text
+        job = harness.db.scalar(select(Job).where(Job.investigation_id == UUID(iid)))
+        assert job.attempts == attempt and job.last_error_code == "processing_error"
+        if attempt < 3:
+            assert job.phase == "retry_wait" and job.available_at >= before + timedelta(
+                seconds=5 * 2 ** (attempt - 1)
+            )
+            assert worker.run_once() is None
+            job.available_at = before - timedelta(seconds=1)
+            harness.db.commit()
+    assert harness.owner.get(base).json()["state"] == "failed"
+    assert harness.owner.get(base + "/jobs").json()["items"][0]["phase"] == "failed"
+    assert worker.run_once() is None
+
+
+def test_revocation_checkpoint_prevents_further_tool_reads(harness):
+    iid, _ = harness.case("healthy")
+    worker = harness.worker()
+    checkpoint = worker.checkpoint
+
+    def revoke(claim, phase, steps):
+        if phase == "collecting" and steps == 1:
+            member = harness.db.scalar(
+                select(Membership).where(Membership.workspace_id == UUID(harness.workspace))
+            )
+            member.active = False
+            harness.db.commit()
+        checkpoint(claim, phase, steps)
+
+    worker.checkpoint = revoke
+    before = len(harness.seen)
+    assert worker.run_once() == "failed"
+    assert len(harness.seen) - before == 1
+    assert (
+        harness.db.scalar(
+            select(func.count()).select_from(Report).where(Report.investigation_id == UUID(iid))
+        )
+        == 0
+    )

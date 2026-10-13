@@ -104,6 +104,10 @@ class DiagnosticContext(Contract):
 
 
 class InvestigationCreate(Contract):
+    submission_id: UUID | None = Field(
+        default=None,
+        description="Reuse this UUID when retrying one submission. Changed payload returns 409.",
+    )
     customer_id: UUID
     question: str = Field(min_length=10, max_length=4000)
     context: DiagnosticContext = Field(default_factory=DiagnosticContext)
@@ -127,6 +131,20 @@ class JobRead(RecordRead):
     attempts: int
     max_attempts: int
     available_at: datetime
+    lease_until: datetime | None
+    phase: Literal[
+        "queued",
+        "claimed",
+        "collecting",
+        "explaining",
+        "publishing",
+        "retry_wait",
+        "completed",
+        "failed",
+    ]
+    completed_steps: int
+    heartbeat_at: datetime | None
+    last_error_code: str | None
 
 
 class ToolCallRead(RecordRead):

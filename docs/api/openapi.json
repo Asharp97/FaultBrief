@@ -2635,6 +2635,19 @@
       },
       "InvestigationCreate": {
         "properties": {
+          "submission_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submission Id",
+            "description": "Reuse this UUID when retrying one submission. Changed payload returns 409."
+          },
           "customer_id": {
             "type": "string",
             "format": "uuid",
@@ -2795,6 +2808,59 @@
             "type": "string",
             "format": "date-time",
             "title": "Available At"
+          },
+          "lease_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lease Until"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "claimed",
+              "collecting",
+              "explaining",
+              "publishing",
+              "retry_wait",
+              "completed",
+              "failed"
+            ],
+            "title": "Phase"
+          },
+          "completed_steps": {
+            "type": "integer",
+            "title": "Completed Steps"
+          },
+          "heartbeat_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeat At"
+          },
+          "last_error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Code"
           }
         },
         "additionalProperties": false,
@@ -2808,7 +2874,12 @@
           "state",
           "attempts",
           "max_attempts",
-          "available_at"
+          "available_at",
+          "lease_until",
+          "phase",
+          "completed_steps",
+          "heartbeat_at",
+          "last_error_code"
         ],
         "title": "JobRead"
       },

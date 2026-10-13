@@ -20,6 +20,7 @@ headers {
 
 body:json {
   {
+    "submission_id": "{{submission_id}}",
     "customer_id": "{{customer_id}}",
     "question": "Why do revenue exports fail for this affected customer?"
   }
@@ -28,7 +29,7 @@ body:json {
 tests {
   test("HTTP 201", function () { expect(res.getStatus()).to.equal(201); });
   test("Workflow contract", function () {
-    bru.setVar("investigation_id", res.getBody().id); expect(res.getBody().state).to.equal("queued");
+    bru.setVar("investigation_id", res.getBody().id); expect(["queued", "running", "completed", "inconclusive"]).to.include(res.getBody().state);
   });
 }
 

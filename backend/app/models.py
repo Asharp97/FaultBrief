@@ -124,6 +124,7 @@ class Investigation(Record, Base):
             ["workspace_id", "created_by_user_id"],
             ["faultbrief.memberships.workspace_id", "faultbrief.memberships.user_id"],
         ),
+        UniqueConstraint("workspace_id", "created_by_user_id", "submission_id"),
         Index("ix_investigations_workspace_created", "workspace_id", "created_at", "id"),
         CheckConstraint(
             "(state = 'queued' AND started_at IS NULL AND finished_at IS NULL) OR "
@@ -141,6 +142,8 @@ class Investigation(Record, Base):
     customer_id: Mapped[UUID] = mapped_column()
     created_by_user_id: Mapped[UUID] = mapped_column()
     question: Mapped[str] = mapped_column(Text)
+    submission_id: Mapped[UUID | None] = mapped_column()
+    submission_fingerprint: Mapped[str | None] = mapped_column(String(64))
     context: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
     state: Mapped[InvestigationState] = mapped_column(
         enum_type(InvestigationState, "investigation_state"),
@@ -163,6 +166,12 @@ class Job(Record, Base):
         CheckConstraint(
             "attempts >= 0 AND attempts <= max_attempts AND max_attempts > 0", name="attempt_limits"
         ),
+        CheckConstraint("completed_steps >= 0 AND completed_steps <= 20", name="progress_limits"),
+        CheckConstraint(
+            "phase IN ('queued', 'claimed', 'collecting', 'explaining', 'publishing', "
+            "'retry_wait', 'completed', 'failed')",
+            name="progress_phase",
+        ),
         Index("ix_jobs_state_available", "state", "available_at"),
     )
     workspace_id: Mapped[UUID] = mapped_column()
@@ -176,6 +185,10 @@ class Job(Record, Base):
         DateTime(timezone=True), server_default=func.now()
     )
     lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    phase: Mapped[str] = mapped_column(String(24), default="queued", server_default="queued")
+    completed_steps: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error_code: Mapped[str | None] = mapped_column(String(40))
 
 
 class ToolCall(Record, Base):

@@ -1,4 +1,6 @@
-from uuid import UUID
+import hashlib
+import json
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException
 from sqlalchemy import func, select
@@ -7,8 +9,17 @@ from sqlalchemy.orm import Session
 
 from .auth import Principal
 from .domain import MembershipRole
-from .models import Evidence, Investigation, Membership, Report, ReportCitation, User, Workspace
-from .schemas import MembershipUpdate, ReportDraft
+from .models import (
+    Evidence,
+    Investigation,
+    Job,
+    Membership,
+    Report,
+    ReportCitation,
+    User,
+    Workspace,
+)
+from .schemas import InvestigationCreate, MembershipUpdate, ReportDraft
 
 
 def provision_user(session: Session, principal: Principal) -> User:
@@ -139,3 +150,43 @@ def save_report(session: Session, investigation: Investigation, draft: ReportDra
     )
     session.flush()
     return report
+
+
+def enqueue_investigation(
+    session: Session, workspace_id: UUID, user_id: UUID, body: InvestigationCreate
+) -> Investigation:
+    """Atomic case/job creation, with race-safe replay for explicit submission UUIDs."""
+    values = body.model_dump(mode="json", exclude={"submission_id"})
+    values["context"] = body.context.model_dump(mode="json", exclude_none=True)
+    fingerprint = hashlib.sha256(
+        json.dumps(values, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    statement = insert(Investigation).values(
+        id=uuid4(),
+        workspace_id=workspace_id,
+        created_by_user_id=user_id,
+        customer_id=body.customer_id,
+        question=body.question,
+        context=values["context"],
+        submission_id=body.submission_id,
+        submission_fingerprint=fingerprint,
+    )
+    if body.submission_id:
+        statement = statement.on_conflict_do_nothing(
+            constraint="uq_investigations_workspace_id_created_by_user_id_submission_id"
+        )
+    investigation_id = session.scalar(statement.returning(Investigation.id))
+    if investigation_id is None:
+        investigation = session.scalar(
+            select(Investigation).where(
+                Investigation.workspace_id == workspace_id,
+                Investigation.created_by_user_id == user_id,
+                Investigation.submission_id == body.submission_id,
+            )
+        )
+        if investigation.submission_fingerprint != fingerprint:
+            raise HTTPException(409, "Submission ID already belongs to a different ticket.")
+        return investigation
+    session.add(Job(workspace_id=workspace_id, investigation_id=investigation_id))
+    session.flush()
+    return session.get(Investigation, investigation_id)

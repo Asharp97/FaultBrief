@@ -1,0 +1,36 @@
+meta {
+  name: 16 Replay submission without duplicate work
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "submission_id": "{{submission_id}}",
+    "customer_id": "{{customer_id}}",
+    "question": "Why do revenue exports fail for this affected customer?"
+  }
+}
+
+tests {
+  test("Expected HTTP status", function () { expect(res.getStatus()).to.equal(201); });
+  test("Replay contract", function () { expect(res.getBody().id).to.equal(bru.getVar("investigation_id")); });
+}
+
+docs {
+  Run after requests 01–15 using the captured submission UUID. A replay must return the original case; a changed payload must fail without creating new work.
+}

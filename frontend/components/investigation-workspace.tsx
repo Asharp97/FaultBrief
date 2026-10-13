@@ -30,6 +30,14 @@ type Report = {
   citations: { evidence_id: string; quote: string | null }[];
 };
 type Check = { id: string; tool_name: string; state: string };
+type Job = {
+  phase: string;
+  completed_steps: number;
+  attempts: number;
+  max_attempts: number;
+  available_at: string;
+  last_error_code: string | null;
+};
 
 async function read(response: Response) {
   const body = await response.json();
@@ -51,6 +59,8 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
   const [report, setReport] = useState<Report | null>(null);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [checks, setChecks] = useState<Check[]>([]);
+  const [job, setJob] = useState<Job | null>(null);
+  const submission = useRef<{ payload: string; id: string } | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [refresh, setRefresh] = useState(0);
@@ -83,6 +93,7 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
     setReport(null);
     setEvidence([]);
     setChecks([]);
+    setJob(null);
     setMessage("");
     pollingDeadline.current = Date.now() + 120000;
   }, []);
@@ -96,6 +107,10 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
         const current: Investigation = await read(
           await fetch(`${base}/investigations/${selected}`, { signal: controller.signal }),
         );
+        const jobs = await fetch(`${base}/investigations/${selected}/jobs`, {
+          signal: controller.signal,
+        }).then(read);
+        setJob(jobs.items[0] || null);
         setInvestigation(current);
         setItems((rows) => rows.map((row) => (row.id === current.id ? current : row)));
         if (current.state === "queued" || current.state === "running") {
@@ -153,18 +168,23 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
         const value = String(fields.get(field) || "").trim();
         if (value) context[field] = value;
       }
+      const payload = {
+        customer_id: fields.get("customer_id"),
+        question: fields.get("question"),
+        context,
+      };
+      const signature = JSON.stringify(payload);
+      if (submission.current?.payload !== signature)
+        submission.current = { payload: signature, id: crypto.randomUUID() };
       const item: Investigation = await read(
         await fetch(`${base}/investigations`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customer_id: fields.get("customer_id"),
-            question: fields.get("question"),
-            context,
-          }),
+          body: JSON.stringify({ ...payload, submission_id: submission.current.id }),
         }),
       );
-      setItems((current) => [item, ...current]);
+      submission.current = null;
+      setItems((current) => [item, ...current.filter((row) => row.id !== item.id)]);
       choose(item.id);
       form.reset();
     } catch (error) {
@@ -279,6 +299,16 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
               <p className="account-eyebrow">{investigation.state}</p>
               <p className="account-muted">{investigation.question}</p>
             </>
+          )}
+          {job && (
+            <p className="account-muted" aria-label="Investigation progress">
+              {job.phase.replaceAll("_", " ")} · {job.completed_steps} checks finished · attempt{" "}
+              {job.attempts}/{job.max_attempts}
+              {job.phase === "retry_wait" && (
+                <> · retry after {new Date(job.available_at).toLocaleTimeString()}</>
+              )}
+              {job.last_error_code && <> · {job.last_error_code.replaceAll("_", " ")}</>}
+            </p>
           )}
           {investigation?.state === "queued" && (
             <p>Waiting for the investigator to collect evidence.</p>

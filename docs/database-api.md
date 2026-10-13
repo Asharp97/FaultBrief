@@ -16,7 +16,7 @@ All application tables and the Alembic version table live in the `faultbrief` Po
 | `customers`        | Affected SaaS accounts. External account IDs are unique within a workspace.                                                 |
 | `integrations`     | Workspace-owned connector metadata. Credentials are represented by a private secret reference, excluded from API responses. |
 | `investigations`   | Required workspace, affected customer, creating member, question, state, and execution timestamps.                          |
-| `jobs`             | One queued job per investigation, with retry counts, availability, and a future lease.                                      |
+| `jobs`             | One job per investigation, with leases, retry counts, availability, progress, and safe failure codes.                       |
 | `tool_calls`       | Job/investigation/workspace scope and optional same-workspace integration. Calls are constrained to read-only metadata.     |
 | `evidence`         | Investigation scope, source reference/version, redacted excerpt, observation time, and optional same-case tool call.        |
 | `reports`          | One report per investigation, summary, supported root cause, confidence, limitations, and suggested team.                   |
@@ -32,14 +32,14 @@ Roles are `owner`, `admin`, `support`, and `viewer`. Owners/admins configure int
 | State          | Meaning                                                          | Allowed next state                    |
 | -------------- | ---------------------------------------------------------------- | ------------------------------------- |
 | `queued`       | The case and its job have been persisted atomically.             | `running`, `failed`                   |
-| `running`      | A future worker is executing the investigation.                  | `completed`, `inconclusive`, `failed` |
+| `running`      | A worker is executing the investigation.                         | `completed`, `inconclusive`, `failed` |
 | `completed`    | Investigation finished with a supported result.                  | Terminal                              |
 | `inconclusive` | Investigation finished without enough evidence for a root cause. | Terminal                              |
 | `failed`       | Execution failed, including failure before starting.             | Terminal                              |
 
 Running cases require a start time; terminal cases require a finish time. Completed/inconclusive cases require both, in chronological order. The service validates transitions and database constraints reject contradictory timestamps. The API does not accept caller-selected states or authors.
 
-Job states describe execution (`queued`, `running`, `completed`, `failed`). An inconclusive investigation can have a completed job. Workers will claim jobs and update these records in the next milestone; creating a case currently leaves it queued.
+Job states describe execution (`queued`, `running`, `completed`, `failed`). An inconclusive investigation can have a completed job. The standalone worker claims persisted jobs and publishes a completed or inconclusive report. See [reliable processing](reliable-processing.md) for retry/restart behavior.
 
 ## API surface
 
@@ -65,9 +65,9 @@ See [the exported OpenAPI contract](api/openapi.json), or start the backend and 
 | `GET .../investigations/{investigation_id}/report`                        | Read its report with scoped citations.                         |
 | `POST .../investigations/{investigation_id}/reports/{report_id}/feedback` | Submit feedback as the authenticated member.                   |
 
-List responses contain `items`, `limit`, and `offset`. Limit is 1–100; offset is 0–10,000. All request objects forbid extra fields. Tickets optionally accept `context` with affected `member_id`, `job_id`, and `request_id` UUIDs. Investigation lists are newest-first with a stable ID tie-breaker. Reports add `observed_facts`, `next_steps`, and `explanation_source` (`rules`, `model`, or `rules_fallback`); migration 0002 adds their storage. See the [baseline workflow](baseline-investigation.md). `401` means invalid/missing identity, `403` insufficient role, `404` unknown or inaccessible scope, `409` a resource/relationship conflict, `422` invalid input, and `503` unavailable/unconfigured dependencies. Database errors do not return SQL parameters or credentials.
+List responses contain `items`, `limit`, and `offset`. Limit is 1–100; offset is 0–10,000. All request objects forbid extra fields. Tickets optionally accept a replay-safe `submission_id` UUID ([details](reliable-processing.md)) and `context` with affected `member_id`, `job_id`, and `request_id` UUIDs. Investigation lists are newest-first with a stable ID tie-breaker. Reports add `observed_facts`, `next_steps`, and `explanation_source` (`rules`, `model`, or `rules_fallback`); migration 0002 adds their storage. See the [baseline workflow](baseline-investigation.md). `401` means invalid/missing identity, `403` insufficient role, `404` unknown or inaccessible scope, `409` a resource/relationship conflict, `422` invalid input, and `503` unavailable/unconfigured dependencies. Database errors do not return SQL parameters or credentials.
 
-`ReportDraft` is the strict internal output contract for a future model. Confidence must be a finite number between 0 and 1; a root-cause claim requires unique citations. The report persistence service checks that every cited evidence ID belongs to the case. Confidence is a declared score, not a calibrated probability; evaluation will determine how useful it is.
+`ReportDraft` is the strict internal output contract for model explanations. Confidence must be a finite number between 0 and 1; a root-cause claim requires unique citations. The report persistence service checks that every cited evidence ID belongs to the case. Confidence is a declared score, not a calibrated probability; evaluation will determine how useful it is.
 
 ## Neon configuration and authentication
 

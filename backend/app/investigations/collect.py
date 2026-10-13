@@ -31,7 +31,7 @@ class Collection:
 
 
 def collect(
-    claim, tools: DiagnosticTools | None, error: DiagnosticError | None = None
+    claim, tools: DiagnosticTools | None, error: DiagnosticError | None = None, *, progress=None
 ) -> Collection:
     result = Collection()
     scope = tools.scope if tools else None
@@ -55,6 +55,8 @@ def collect(
         return result
 
     def read(name, args):
+        if progress:
+            progress("collecting", len(result.calls))
         output = tools.run(name, args)
         call = ToolCall(
             id=uuid4(),
@@ -67,6 +69,8 @@ def collect(
             arguments_redacted={**args, **({"code": output.code} if output.code else {})},
         )
         result.calls.append(call)
+        if progress:
+            progress("collecting", len(result.calls))
         result.results[name] = output
         result.references[name] = {}
         if output.state != "completed":
