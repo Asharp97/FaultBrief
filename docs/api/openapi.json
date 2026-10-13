@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "FaultBrief API",
-    "description": "Scoped workspace/customer API. Investigations queue jobs; browser authentication uses the Neon SDK; the investigation worker arrives later.",
+    "description": "Scoped workspace/customer API. Investigations queue jobs; bounded workers collect evidence and produce reviewable investigation reports.",
     "version": "0.2.0"
   },
   "paths": {
@@ -2287,6 +2287,49 @@
         ],
         "title": "CustomerRead"
       },
+      "DiagnosticContext": {
+        "properties": {
+          "member_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Id"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DiagnosticContext"
+      },
       "ErrorResponse": {
         "properties": {
           "detail": {
@@ -2602,6 +2645,9 @@
             "maxLength": 4000,
             "minLength": 10,
             "title": "Question"
+          },
+          "context": {
+            "$ref": "#/components/schemas/DiagnosticContext"
           }
         },
         "additionalProperties": false,
@@ -2648,6 +2694,9 @@
             "type": "string",
             "title": "Question"
           },
+          "context": {
+            "$ref": "#/components/schemas/DiagnosticContext"
+          },
           "state": {
             "$ref": "#/components/schemas/InvestigationState"
           },
@@ -2686,6 +2735,7 @@
           "customer_id",
           "created_by_user_id",
           "question",
+          "context",
           "state",
           "started_at",
           "finished_at"
@@ -3109,6 +3159,36 @@
             "type": "string",
             "format": "date-time",
             "title": "Updated At"
+          },
+          "observed_facts": {
+            "items": {
+              "type": "string",
+              "maxLength": 1000,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Observed Facts"
+          },
+          "next_steps": {
+            "items": {
+              "type": "string",
+              "maxLength": 1000,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Next Steps"
+          },
+          "explanation_source": {
+            "type": "string",
+            "enum": [
+              "rules",
+              "model",
+              "rules_fallback"
+            ],
+            "title": "Explanation Source",
+            "default": "rules"
           },
           "summary": {
             "type": "string",

@@ -29,6 +29,16 @@ export default defineConfig({
       url: "http://127.0.0.1:58110/health",
       reuseExistingServer: false,
     },
+    ...(process.env.FAULTBRIEF_TEST_DATABASE_URL
+      ? [
+          {
+            command:
+              "node ../scripts/python.mjs run --project backend --locked uvicorn --app-dir . frontend.tests.investigation_api:app --host 127.0.0.1 --port 58113 --log-level warning --no-access-log",
+            url: "http://127.0.0.1:58113/health",
+            reuseExistingServer: false,
+          },
+        ]
+      : []),
     {
       command: "pnpm dev --hostname 127.0.0.1 --port 58111",
       url: "http://127.0.0.1:58111/auth/sign-in",

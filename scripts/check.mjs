@@ -14,7 +14,18 @@ try {
     join(root, ".gitignore"),
     "--check",
   ]);
-  runUv(["run", "--project", "backend", "--locked", "ruff", "check", "backend", "demo", "tests"]);
+  runUv([
+    "run",
+    "--project",
+    "backend",
+    "--locked",
+    "ruff",
+    "check",
+    "backend",
+    "demo",
+    "tests",
+    "frontend/tests/investigation_api.py",
+  ]);
   runUv([
     "run",
     "--project",
@@ -26,6 +37,7 @@ try {
     "backend",
     "demo",
     "tests",
+    "frontend/tests/investigation_api.py",
   ]);
   runUv(["run", "--project", "backend", "--locked", "pytest"]);
   runUv([

@@ -283,6 +283,7 @@ def create_investigation(
         customer_id=customer.id,
         created_by_user_id=membership.user_id,
         question=body.question,
+        context=body.context.model_dump(mode="json", exclude_none=True),
         state=InvestigationState.QUEUED,
     )
     session.add(investigation)
@@ -305,7 +306,7 @@ def list_investigations(
         session,
         select(Investigation)
         .where(Investigation.workspace_id == workspace_id)
-        .order_by(Investigation.created_at, Investigation.id),
+        .order_by(Investigation.created_at.desc(), Investigation.id.desc()),
         limit,
         offset,
     )

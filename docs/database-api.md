@@ -65,7 +65,7 @@ See [the exported OpenAPI contract](api/openapi.json), or start the backend and 
 | `GET .../investigations/{investigation_id}/report`                        | Read its report with scoped citations.                         |
 | `POST .../investigations/{investigation_id}/reports/{report_id}/feedback` | Submit feedback as the authenticated member.                   |
 
-List responses contain `items`, `limit`, and `offset`. Limit is 1–100; offset is 0–10,000. All request objects forbid extra fields. `401` means invalid/missing identity, `403` insufficient role, `404` unknown or inaccessible scope, `409` a resource/relationship conflict, `422` invalid input, and `503` unavailable/unconfigured dependencies. Database errors do not return SQL parameters or credentials.
+List responses contain `items`, `limit`, and `offset`. Limit is 1–100; offset is 0–10,000. All request objects forbid extra fields. Tickets optionally accept `context` with affected `member_id`, `job_id`, and `request_id` UUIDs. Investigation lists are newest-first with a stable ID tie-breaker. Reports add `observed_facts`, `next_steps`, and `explanation_source` (`rules`, `model`, or `rules_fallback`); migration 0002 adds their storage. See the [baseline workflow](baseline-investigation.md). `401` means invalid/missing identity, `403` insufficient role, `404` unknown or inaccessible scope, `409` a resource/relationship conflict, `422` invalid input, and `503` unavailable/unconfigured dependencies. Database errors do not return SQL parameters or credentials.
 
 `ReportDraft` is the strict internal output contract for a future model. Confidence must be a finite number between 0 and 1; a root-cause claim requires unique citations. The report persistence service checks that every cited evidence ID belongs to the case. Confidence is a declared score, not a calibrated probability; evaluation will determine how useful it is.
 
@@ -86,7 +86,7 @@ Read [the authentication flow and current implementation gaps](authentication.md
 
 Send the short-lived Neon Auth **JWT**, not an opaque session cookie, as `Authorization: Bearer <token>`. The verifier uses the configured JWKS, constrains the token algorithm to its signing key, verifies signature/issuer/expiry/issue time/subject, and checks the audience when configured. It never follows a key URL supplied by the token. Signing keys are cached with refresh support. The current configured Neon key uses EdDSA; RS256/ES256 keys are also supported for compatible providers. See [Neon's managed-token verification guidance](https://neon.com/docs/compute/functions/authentication).
 
-The Next.js browser signup/login flow is implemented; see [authentication](authentication.md). The backend does not collect or store Neon passwords. The public marketing samples remain prepared UI data, independent of these API routes. No worker, live diagnostics, or model execution is introduced by this milestone.
+The Next.js browser signup/login flow is implemented; see [authentication](authentication.md). The backend does not collect or store Neon passwords. The public marketing samples remain prepared UI data, independent of these API routes. Read-only Ledger diagnostics, the leased investigation worker, and optional structured model explanations are implemented in the [baseline milestone](baseline-investigation.md).
 
 ## Migrations and contract maintenance
 

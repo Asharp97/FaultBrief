@@ -1,0 +1,32 @@
+meta {
+  name: 11 Every citation has collected evidence
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations/{{investigation_id}}/report
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+
+  if (!bru.getVar("investigation_id")) throw new Error("Run 05 first to capture an investigation ID.");
+}
+
+tests {
+  test("HTTP 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("Workflow contract", function () {
+    const body = res.getBody(); const ids = bru.getVar("evidence_ids"); body.citations.forEach((item) => expect(ids).to.include(item.evidence_id)); if (body.root_cause) expect(body.citations.length).to.be.greaterThan(0);
+  });
+}
+
+docs {
+  Every citation has collected evidence. Run requests in order against a development workspace with an approved customer and active worker.
+  Expected HTTP 200. After 05, repeat 06 until completed or inconclusive before 07–15.
+}

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -97,9 +97,16 @@ class IntegrationRead(RecordRead):
     enabled: bool
 
 
+class DiagnosticContext(Contract):
+    member_id: UUID | None = None
+    job_id: UUID | None = None
+    request_id: UUID | None = None
+
+
 class InvestigationCreate(Contract):
     customer_id: UUID
     question: str = Field(min_length=10, max_length=4000)
+    context: DiagnosticContext = Field(default_factory=DiagnosticContext)
 
 
 class InvestigationRead(RecordRead):
@@ -107,6 +114,7 @@ class InvestigationRead(RecordRead):
     customer_id: UUID
     created_by_user_id: UUID
     question: str
+    context: DiagnosticContext
     state: InvestigationState
     started_at: datetime | None
     finished_at: datetime | None
@@ -149,6 +157,13 @@ class Citation(Contract):
 
 
 class ReportDraft(Contract):
+    observed_facts: list[Annotated[str, Field(min_length=1, max_length=1000)]] = Field(
+        default_factory=list, max_length=20
+    )
+    next_steps: list[Annotated[str, Field(min_length=1, max_length=1000)]] = Field(
+        default_factory=list, max_length=20
+    )
+    explanation_source: Literal["rules", "model", "rules_fallback"] = "rules"
     summary: str = Field(min_length=1, max_length=4000)
     root_cause: str | None = Field(default=None, min_length=1, max_length=4000)
     confidence: float = Field(ge=0, le=1, strict=True)

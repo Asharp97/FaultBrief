@@ -29,7 +29,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         version="0.2.0",
         lifespan=lifespan,
         description="Scoped workspace/customer API. Investigations queue jobs; "
-        "browser authentication uses the Neon SDK; the investigation worker arrives later.",
+        "bounded workers collect evidence and produce reviewable investigation reports.",
     )
     application.state.database_engine = engine
     application.state.token_verifier = TokenVerifier(settings)

@@ -1,0 +1,38 @@
+meta {
+  name: 05 Submit investigation ticket
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/v1/workspaces/{{workspace_id}}/investigations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customer_id": "{{customer_id}}",
+    "question": "Why do revenue exports fail for this affected customer?"
+  }
+}
+
+tests {
+  test("HTTP 201", function () { expect(res.getStatus()).to.equal(201); });
+  test("Workflow contract", function () {
+    bru.setVar("investigation_id", res.getBody().id); expect(res.getBody().state).to.equal("queued");
+  });
+}
+
+docs {
+  Submit investigation ticket. Run requests in order against a development workspace with an approved customer and active worker.
+  Expected HTTP 201. After 05, repeat 06 until completed or inconclusive before 07–15.
+}

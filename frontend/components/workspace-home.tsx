@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth/client";
+import { InvestigationWorkspace } from "@/components/investigation-workspace";
 import { WorkspaceMembers } from "@/components/workspace-members";
 
 type Workspace = { id: string; name: string };
@@ -12,6 +13,7 @@ export function WorkspaceHome({ name, email }: { name: string; email: string }) 
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<Workspace | null>(null);
+  const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -116,6 +118,12 @@ export function WorkspaceHome({ name, email }: { name: string; email: string }) 
                   <strong>{item.name}</strong>
                   <code>{item.id}</code>
                   <button
+                    className="button button-teal button-small"
+                    onClick={() => setActiveWorkspace(item)}
+                  >
+                    Investigate {item.name}
+                  </button>
+                  <button
                     className="button button-outline button-small"
                     onClick={() => setSelected(item)}
                   >
@@ -178,6 +186,9 @@ export function WorkspaceHome({ name, email }: { name: string; email: string }) 
           </p>
         </section>
       </div>
+      {activeWorkspace && identity && (
+        <InvestigationWorkspace key={activeWorkspace.id} workspace={activeWorkspace} />
+      )}
       {selected && identity && (
         <WorkspaceMembers key={selected.id} workspace={selected} userId={identity} />
       )}
