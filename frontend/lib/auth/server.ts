@@ -28,3 +28,14 @@ export function sameOrigin(request: Request) {
 export function apiError(detail: string, status: number) {
   return Response.json({ detail }, { status, headers: { "Cache-Control": "no-store" } });
 }
+
+export async function getSignedInUser() {
+  try {
+    const auth = getAuth();
+    if (!auth) return null;
+    const session = await auth.getSession();
+    return session.error ? null : session.data?.user || null;
+  } catch {
+    return null;
+  }
+}

@@ -239,3 +239,45 @@ test("owners manage team roles, keep an owner, and revoke an existing session's 
     await teammateContext.close();
   }
 });
+
+test("signed-in users skip the homepage and auth forms, and logout restores the homepage", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("link", { name: "Sign in", exact: true }).first()).toBeVisible();
+  await page.goto("/auth/sign-in");
+  await page.getByLabel("Email address").fill("redirect@example.invalid");
+  await page.getByLabel("Password", { exact: true }).fill("synthetic-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  for (const path of ["/", "/auth/sign-in", "/auth/sign-up"]) {
+    const response = await context.request.get(path, { maxRedirects: 0 });
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toBe("/dashboard");
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/dashboard$/);
+  }
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page).toHaveURL(/\/auth\/sign-in$/);
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("link", { name: "Sign in", exact: true }).first()).toBeVisible();
+});
+
+test("a rejected signup callback explains the configuration error without signing in", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/auth/sign-up");
+  await page.getByLabel("Full name").fill("Callback test");
+  await page.getByLabel("Email address").fill("callback-rejected@example.invalid");
+  await page.getByLabel("Password", { exact: true }).fill("synthetic-password-123");
+  await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("INVALID_CALLBACK_URL");
+  await expect(page.getByRole("status")).toContainText("http://127.0.0.1:58111");
+  await expect(page).toHaveURL(/\/auth\/sign-up$/);
+  expect((await context.request.get("/api/auth/get-session")).status()).toBe(200);
+  expect((await context.request.get("/api/faultbrief/me")).status()).toBe(401);
+});

@@ -10,7 +10,7 @@ Neon Auth manages passwords, verification, and sessions. The browser calls the N
 4. Run `pnpm run dev`. Restart after changing environment settings.
 5. Visit `http://localhost:3000/auth/sign-up`. Enter your name, a real email you control, and a password of at least eight characters.
 6. If Neon requires email verification, follow the email link and then sign in at `/auth/sign-in`. The form will not claim that an unverified account is signed in.
-7. A successful sign-in opens `/dashboard`. The page connects your verified identity to `GET /v1/me`; create a company workspace to exercise `POST /v1/workspaces`.
+7. A successful sign-in opens `/dashboard`. Signed-in users visiting `/`, `/auth/sign-in`, or `/auth/sign-up` are redirected there on the server before the marketing page or auth form renders. The page connects your verified identity to `GET /v1/me`; create a company workspace to exercise `POST /v1/workspaces`.
 8. Press **Sign out**. Visiting `/dashboard` again redirects to sign-in; the cookie-authenticated API proxy rejects requests without a valid session.
 
 The [official Neon Next.js guide](https://neon.com/docs/auth/quick-start/nextjs) describes this SDK integration and provider configuration. Email delivery and verification policy are controlled by Neon.
@@ -69,7 +69,7 @@ No credentials or JWTs are saved to localStorage or sessionStorage. The copy but
 
 `frontend/.env.local` needs `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` (32+ characters), and `FAULTBRIEF_API_BASE_URL`. These are server-only settings: never prefix them with `NEXT_PUBLIC_`. In production, generate an independent cookie secret, use HTTPS, and point the API base URL at the deployed backend. Keep the backend's Auth URL, issuer, and JWKS consistent with the same Neon branch.
 
-The frontend now requires a **Next.js Node server / compatible server deployment**, using `pnpm --dir frontend build` and `pnpm --dir frontend start`. Static-only `out/` hosting cannot handle sign-in cookies or API routes. The public marketing homepage remains prerendered. The dev launcher routes the frontend to the selected API port, including custom ports.
+The frontend now requires a **Next.js Node server / compatible server deployment**, using `pnpm --dir frontend build` and `pnpm --dir frontend start`. Static-only `out/` hosting cannot handle sign-in cookies or API routes. The public marketing UI stays available to signed-out visitors. Its route is rendered per request to check the session and redirect signed-in visitors; the GSAP UI remains a client component. The dev launcher routes the frontend to the selected API port, including custom ports.
 
 ## Verification
 
@@ -82,3 +82,11 @@ pnpm run check
 The browser tests run the real Neon SDK against a loopback provider/API double with synthetic credentials. They cover signup, invalid and valid sign-in, email-verification-required behavior, HTTP-only cookies, protected pages, authenticated workspace creation, cross-origin rejection, password recovery, teammate provisioning, role changes, last-owner protection, revocation, and sign-out. Existing backend tests exercise real signed JWT verification and PostgreSQL permissions. Neither automated suite creates real Neon users. Complete signup/sign-in and the recovery walkthrough with your own test account to validate live provider settings and email delivery. PostgreSQL tests also exercise simultaneous owner removals on independent connections.
 
 Browser test artifacts are ignored. CI installs Chromium and runs the same browser checks without Neon credentials. The tests restore Next.js-generated type configuration after their temporary server stops.
+
+## Diagnose signup HTTP 403
+
+`POST /api/auth/sign-up/email` forwards the managed provider's response. `INVALID_CALLBACK_URL` / “Invalid callbackURL” means Neon rejected the return address supplied by the form: the browser's origin plus `/auth/sign-in`. This is a provider redirect allowlist issue, not a FaultBrief database/workspace permission issue. Keep that callback so email verification returns to the app.
+
+In the Neon Console, select the branch that matches `NEON_AUTH_BASE_URL`, then open Auth configuration and its trusted domains/origins. Add your exact development origin, such as `http://localhost:3000`; add `http://127.0.0.1:3000` if you also open that address. Scheme, host, and port must match the browser URL. Custom ports need their own entries. Do not add a wildcard or disable origin protection. Retry signup after saving; provider settings do not require an application migration. If the app URL later changes for deployment, approve that actual HTTPS origin on the matching Neon branch.
+
+The form shows a specific callback/configuration error instead of hiding it behind a generic signup message. Provider 403s log only the operation, status, and an allowlisted error code. Local cross-origin rejection has a separate `AUTH_ORIGIN_MISMATCH` code. No email, password, token, cookie, raw provider body, or stack trace is logged. Automated browser tests reproduce callback rejection through the real SDK with a synthetic provider; they do not modify Neon settings or create live accounts.

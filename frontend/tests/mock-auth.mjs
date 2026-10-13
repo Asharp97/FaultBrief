@@ -116,6 +116,13 @@ createServer(async (req, res) => {
     }
     if (["sign-in/email", "sign-up/email"].includes(operation)) {
       const data = await body(req);
+      if (operation === "sign-up/email" && data.email === "callback-rejected@example.invalid")
+        return json(res, { code: "INVALID_CALLBACK_URL", message: "Invalid callbackURL" }, 403);
+      if (
+        operation === "sign-up/email" &&
+        data.callbackURL !== "http://127.0.0.1:58111/auth/sign-in"
+      )
+        return json(res, { code: "INVALID_CALLBACK_URL", message: "Invalid callbackURL" }, 403);
       const record = account(data.email, data.name);
       if (data.password !== record.password)
         return json(

@@ -5,6 +5,29 @@ import { isAuthApiError } from "@neondatabase/auth/next";
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth/client";
 
+function authFailure(error: unknown, signup: boolean) {
+  const value =
+    error && typeof error === "object" ? (error as { code?: unknown; message?: unknown }) : {};
+  const code = typeof value.code === "string" ? value.code.toUpperCase() : "";
+  const message = typeof value.message === "string" ? value.message.toLowerCase() : "";
+  if (code === "INVALID_CALLBACK_URL" || message === "invalid callbackurl")
+    return `This app's sign-up return address is not allowed. Ask your administrator to approve ${window.location.origin} in the authentication settings. (INVALID_CALLBACK_URL)`;
+  if (["INVALID_ORIGIN", "ORIGIN_NOT_ALLOWED", "AUTH_ORIGIN_MISMATCH"].includes(code))
+    return "Authentication is blocked for this app address. Ask your administrator to check the allowed app URLs.";
+  if (
+    [
+      "SIGNUP_DISABLED",
+      "SIGN_UP_DISABLED",
+      "EMAIL_PASSWORD_DISABLED",
+      "EMAIL_AND_PASSWORD_DISABLED",
+    ].includes(code)
+  )
+    return "Creating accounts is disabled. Ask your administrator to enable email and password signup.";
+  return signup
+    ? "Could not create the account. Check your details or sign in if you already have an account."
+    : "Sign-in failed. Check your email and password, or verify your email first.";
+}
+
 export function AuthForm({
   mode,
   configured,
@@ -35,11 +58,7 @@ export function AuthForm({
           })
         : await authClient.signIn.email(credentials);
       if (result.error) {
-        setMessage(
-          signup
-            ? "Could not create the account. Check your details or sign in if you already have an account."
-            : "Sign-in failed. Check your email and password, or verify your email first.",
-        );
+        setMessage(authFailure(result.error, signup));
         return;
       }
       form.reset();
@@ -53,9 +72,7 @@ export function AuthForm({
     } catch (error) {
       setMessage(
         isAuthApiError(error) && [400, 401, 403, 422].includes(error.status)
-          ? signup
-            ? "Could not create the account. Check your details or sign in if you already have an account."
-            : "Sign-in failed. Check your email and password, or verify your email first."
+          ? authFailure(error, signup)
           : "Sign-in is temporarily unavailable. Please try again.",
       );
     } finally {

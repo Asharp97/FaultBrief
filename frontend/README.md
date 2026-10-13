@@ -1,6 +1,6 @@
 # FaultBrief frontend
 
-Next.js App Router application with a prerendered Tailwind/GSAP marketing homepage and Neon SDK signup/login and password recovery, a protected workspace page with owner-controlled team access and a ticket/evidence/report dashboard, and server-side API proxies. The paper/teal visual direction and reduced-motion support carry into the account screens.
+Next.js App Router application with a Tailwind/GSAP marketing homepage with a server-side session redirect and Neon SDK signup/login and password recovery, a protected workspace page with owner-controlled team access and a ticket/evidence/report dashboard, and server-side API proxies. The paper/teal visual direction and reduced-motion support carry into the account screens.
 
 From the repository root, run `pnpm run setup`, `pnpm run auth:configure`, and `pnpm run dev`. Follow [the complete sign-in walkthrough](../docs/authentication.md) for Neon trusted origins, verification, and test accounts.
 
@@ -14,6 +14,6 @@ pnpm exec playwright install chromium
 pnpm run test:e2e
 ```
 
-Run those commands inside `frontend`. This is no longer an `out/` static export: deploy a Next.js server or compatible managed runtime. The homepage itself remains prerendered; auth and private routes run on the server.
+Run those commands inside `frontend`. This is no longer an `out/` static export: deploy a Next.js server or compatible managed runtime. The homepage checks the session on the server: signed-in users go directly to the dashboard; signed-out visitors see the marketing UI. Auth and private routes also run on the server.
 
 The marketing investigation samples use synthetic UI data. They do not run a model or claim a connected diagnostic worker. Browser tests use a loopback test provider/API; live Neon email/password testing uses your own development accounts.
