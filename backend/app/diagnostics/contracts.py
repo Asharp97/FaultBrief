@@ -36,7 +36,10 @@ class LogsArgs(Contract):
 
 
 class RunbooksArgs(Contract):
+    model_config = ConfigDict(str_strip_whitespace=True)
     runbook_id: Literal["export-permissions", "export-feature", "export-jobs"] | None = None
+    query: str | None = Field(default=None, min_length=1, max_length=512)
+    limit: int = Field(default=3, ge=1, le=3, strict=True)
 
 
 class ToolResult(Contract):
@@ -110,6 +113,9 @@ class Runbook(Contract):
     version: str = Field(min_length=1, max_length=40)
     title: str = Field(min_length=1, max_length=200)
     content: str = Field(min_length=1, max_length=4000)
+    source_path: str = Field(min_length=1, max_length=160)
+    start_line: int = Field(ge=1, strict=True)
+    end_line: int = Field(ge=1, strict=True)
 
 
 class Runbooks(Contract):

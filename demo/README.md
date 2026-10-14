@@ -80,3 +80,7 @@ pnpm run demo:api
 ```
 
 Automated tests create isolated temporary SQLite databases and synthetic keys. They verify all five scenarios and reset, actual export/download behavior, customer scope/FK checks, read-only access, answer-key separation, and browser reproduction/CSV download. They never use real Neon data.
+
+## Connect a sample to an existing FaultBrief workspace
+
+Use `pnpm run demo:connect -- --workspace-id WORKSPACE_UUID --owner-user-id USER_UUID` while Ledger is running locally. This operator-only helper creates a default feature-disabled sample, stores the expected answer privately, and approves its read-only customer mapping. It prints references, not secrets/answer labels, and does not submit a ticket. Add `--scenario` for another supported case. See [the model-free walkthrough](../docs/testing-first-investigation.md).

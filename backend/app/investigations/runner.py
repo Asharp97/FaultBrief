@@ -111,7 +111,14 @@ def investigate(claim, tools, settings, budget, transport, progress):
     while True:
         if time.monotonic() >= budget.deadline:
             return collector.result, "runtime_limit"
-        if diagnose(collector.result).state == InvestigationState.COMPLETED:
+        finding = diagnose(collector.result)
+        if finding.state == InvestigationState.COMPLETED:
+            if (
+                finding.report.root_cause
+                and "runbooks" not in collector.result.results
+                and len(collector.result.calls) < settings.investigation_max_steps
+            ):
+                collector.read("runbooks", collector.arguments("runbooks"))
             return collector.result, "sufficient_evidence"
         if len(collector.result.calls) >= settings.investigation_max_steps:
             return collector.result, "step_limit"

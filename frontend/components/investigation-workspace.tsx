@@ -62,9 +62,18 @@ async function read(response: Response) {
 const referencePattern =
   "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
-export function InvestigationWorkspace({ workspace }: { workspace: { id: string; name: string } }) {
+export function InvestigationWorkspace({
+  workspace,
+  userId,
+  showDemoSetup,
+}: {
+  workspace: { id: string; name: string };
+  userId: string;
+  showDemoSetup: boolean;
+}) {
   const base = `/api/faultbrief/workspaces/${workspace.id}`;
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [owner, setOwner] = useState(false);
   const [items, setItems] = useState<Investigation[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
@@ -84,11 +93,18 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
     const controller = new AbortController();
     async function load() {
       try {
-        const [affected, cases] = await Promise.all([
+        const [affected, cases, members] = await Promise.all([
           fetch(`${base}/customers?limit=100`, { signal: controller.signal }).then(read),
           fetch(`${base}/investigations?limit=50`, { signal: controller.signal }).then(read),
+          fetch(`${base}/memberships?limit=100`, { signal: controller.signal }).then(read),
         ]);
         setCustomers(affected.items);
+        setOwner(
+          members.items.some(
+            (member: { user_id: string; active: boolean; role: string }) =>
+              member.user_id === userId && member.active && member.role === "owner",
+          ),
+        );
         setItems(cases.items);
       } catch (error) {
         if (!controller.signal.aborted)
@@ -97,7 +113,7 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
     }
     void load();
     return () => controller.abort();
-  }, [base, refresh]);
+  }, [base, refresh, userId]);
 
   const choose = useCallback((id: string) => {
     setSelected(id);
@@ -212,6 +228,8 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
     }
   }
 
+  const setupCommand = `pnpm run demo:connect -- --workspace-id ${workspace.id} --owner-user-id ${userId}`;
+
   return (
     <section
       className="account-card investigation-section"
@@ -276,11 +294,64 @@ export function InvestigationWorkspace({ workspace }: { workspace: { id: string;
               </button>
             </form>
           ) : (
-            <p className="account-muted">
-              No affected customers yet. Ask your workspace administrator to connect the customer
-              you want to investigate.
-            </p>
+            <div className="customer-onboarding" aria-label="Set up your first investigation">
+              <h4>Connect an affected customer first</h4>
+              <p className="account-muted">
+                Your team is ready. An affected customer is an account in the app you investigate,
+                separate from your FaultBrief teammates. Connect an account to give the investigator
+                records to check.
+              </p>
+              {showDemoSetup && owner ? (
+                <details open>
+                  <summary>Try a local Ledger sample</summary>
+                  <ol>
+                    <li>
+                      Configure the local demo once: <code>pnpm run demo:configure</code>, then{" "}
+                      <code>node scripts/configure-diagnostics.mjs</code>.
+                    </li>
+                    <li>
+                      Start the services and investigator without model calls:{" "}
+                      <code>pnpm run dev --worker --baseline</code>.
+                    </li>
+                    <li>
+                      In another terminal at the repository root, run this command to create and
+                      connect a sample account:
+                    </li>
+                  </ol>
+                  <pre className="setup-command">{setupCommand}</pre>
+                  <button
+                    className="button button-outline button-small"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(setupCommand);
+                        setMessage(
+                          "Demo setup command copied. Run it in a second terminal, then refresh customers.",
+                        );
+                      } catch {
+                        setMessage("Select and copy the demo setup command above.");
+                      }
+                    }}
+                  >
+                    Copy demo setup command
+                  </button>
+                  <p className="account-muted">
+                    After it prints “connected”, refresh customers, select the sample account, and
+                    enter “Why did this customer's revenue export fail?” No model tuning is needed.
+                  </p>
+                </details>
+              ) : (
+                <p className="account-muted">
+                  Ask the workspace owner to approve a customer diagnostic connection.
+                </p>
+              )}
+            </div>
           )}
+          <button
+            className="button button-outline button-small"
+            onClick={() => setRefresh((value) => value + 1)}
+          >
+            Refresh customers
+          </button>
           <div className="investigation-list-heading">
             <h3>Recent investigations</h3>
             <button

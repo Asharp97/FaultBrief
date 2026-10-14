@@ -160,3 +160,66 @@ test("retrying a lost ticket response creates one investigation", async ({ page,
   ).json();
   expect(jobs.items).toHaveLength(1);
 });
+
+test("a workspace owner follows the empty-state setup and refreshes the connected sample", async ({
+  page,
+  context,
+}) => {
+  test.skip(!process.env.FAULTBRIEF_TEST_DATABASE_URL, "Requires disposable PostgreSQL.");
+  await page.goto("/auth/sign-in");
+  await page.getByLabel("Email address").fill("onboarding-investigator@example.invalid");
+  await page.getByLabel("Password", { exact: true }).fill("synthetic-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  const company = "First investigation setup";
+  await page.getByLabel("Company or workspace name").fill(company);
+  await page.getByRole("button", { name: "Create workspace", exact: true }).click();
+  await expect(page.getByText(company, { exact: true })).toBeVisible();
+  const workspaces = await (await context.request.get("/api/faultbrief/workspaces")).json();
+  const wid = workspaces.items.find((item: { name: string }) => item.name === company).id;
+  const user = await (await context.request.get("/api/faultbrief/me")).json();
+  await page.getByRole("button", { name: `Investigate ${company}`, exact: true }).click();
+  const panel = page.getByRole("region", { name: `Investigations for ${company}` });
+  const setup = panel.getByLabel("Set up your first investigation");
+  await expect(setup).toContainText("separate from your FaultBrief teammates");
+  await expect(setup).toContainText("--workspace-id " + wid);
+  await expect(setup).toContainText("--owner-user-id " + user.id);
+  await expect(setup).toContainText("pnpm run dev --worker --baseline");
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (value: string) => {
+          document.body.dataset.testCopiedCommand = value;
+        },
+      },
+    }),
+  );
+  await setup.getByRole("button", { name: "Copy demo setup command", exact: true }).click();
+  expect(await page.evaluate(() => document.body.dataset.testCopiedCommand)).toContain(
+    "--workspace-id " + wid,
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  const jwt = (await (await context.request.get("/api/auth/token")).json()).token;
+  const response = await context.request.post("http://127.0.0.1:58113/test/seed", {
+    headers: { Authorization: `Bearer ${jwt}` },
+    data: { workspace_id: wid, scenario: "feature_disabled" },
+  });
+  expect(response.status()).toBe(200);
+  await panel.getByRole("button", { name: "Refresh customers", exact: true }).click();
+  await expect(panel.getByLabel("Affected customer")).toBeVisible();
+  await panel.getByLabel("Affected customer").selectOption((await response.json()).customer_id);
+  await panel.getByLabel("What went wrong?").fill("Why did this customer's revenue export fail?");
+  await panel.getByRole("button", { name: "Investigate ticket", exact: true }).click();
+  await expect(panel.getByRole("article", { name: "Investigation report" })).toBeVisible({
+    timeout: 30000,
+  });
+  await expect(panel.locator(".evidence-list")).toContainText(
+    /runbook:ledger\/export-feature\.v1\.md#L1-L/,
+  );
+});

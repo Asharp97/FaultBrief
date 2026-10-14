@@ -9,6 +9,7 @@ from ..config import Settings
 
 class InvestigationSettings(Settings):
     investigation_mode: Literal["baseline", "model_selected"] = "baseline"
+    model_explanation_enabled: bool = True
     investigation_max_steps: int = Field(default=5, ge=1, le=8)
     investigation_max_seconds: float = Field(default=45, ge=1, le=60)
     model_max_calls: int = Field(default=6, ge=1, le=10)

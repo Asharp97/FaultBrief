@@ -9,3 +9,5 @@ Optional request 14 uses a different account with no membership in this workspac
 For a first supported report use Ledger's feature-disabled scenario. Healthy cases describe the observed successful export, and timeout cases remain inconclusive. These tests accept a rules report without an inference key; `explanation_source` records whether a model explanation was used. The original application collection is a separate queued-state test mode and should run without the worker.
 
 Run 18–20 to inspect model reservations, reconcile request count and estimated spending with the job, and verify a different account cannot read the audit. Baseline cases have zero model reservations; model-selected cases require [server-side model and pricing configuration](../../docs/bounded-investigations.md).
+
+For a first customer after creating a workspace, follow [the guided model-free setup](../../docs/testing-first-investigation.md). Use the helper output’s FaultBrief `customer_id` (not `source_customer_id`) in this collection. Baseline mode needs no model tuning or inference key. Runbook evidence now preserves versioned Markdown file/line references.

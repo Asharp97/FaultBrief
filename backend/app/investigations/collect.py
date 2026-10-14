@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from ..diagnostics.bindings import DiagnosticError
-from ..diagnostics.client import DiagnosticTools
+from ..diagnostics.client import DiagnosticTools, redact
 from ..diagnostics.contracts import ToolResult
 from ..domain import EvidenceKind, ToolCallState
 from ..models import Evidence, ToolCall
@@ -62,6 +62,8 @@ class Collector:
             self.reconcile()
             return output
         rows = output.data.get("items", []) if name != "features" else [output.data]
+        if name == "runbooks" and output.data.get("query") and not rows:
+            result.notes.append("No runbook matched the diagnostic query.")
         for row in rows:
             kind = (
                 EvidenceKind.RUNBOOK
@@ -74,7 +76,8 @@ class Collector:
             )
             key = str(row["id"])
             if name == "runbooks":
-                source, version, excerpt = f"runbook:ledger/{key}", row["version"], row["content"]
+                source = f"runbook:{row['source_path']}#L{row['start_line']}-L{row['end_line']}"
+                version, excerpt = row["version"], row["content"]
                 observed = datetime.now(UTC)
             else:
                 source = f"ledger:customer/{scope.source_customer_id}/{name}/{key}"
@@ -156,6 +159,23 @@ class Collector:
                 "member_id"
             )
             return {"member_id": member_id} if member_id else {}
+        if name == "runbooks":
+            observed = []
+            if result.request:
+                observed.append(result.request["event"])
+            if result.job and result.job.get("error_code"):
+                observed.append(result.job["error_code"])
+            question = self.claim.question
+            if self.tools.settings.demo_token:
+                question = question.replace(
+                    self.tools.settings.demo_token.get_secret_value(), "[redacted]"
+                )
+            return {
+                "query": (" ".join(observed) + " " + redact(question, max_chars=4000)).strip()[
+                    :512
+                ],
+                "limit": 2,
+            }
         return {}
 
 

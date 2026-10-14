@@ -63,3 +63,7 @@ Migration 0003 adds replay-safe submissions and durable worker progress. See [re
 ## Optional model-selected checks
 
 Migration 0004 adds the model-request audit and durable budget reservations. See [bounded investigations](bounded-investigations.md) for opt-in configuration, stop rules, dispatch recommendations, and test coverage.
+
+## Easier first-customer setup and model-free testing
+
+See [your first investigation](testing-first-investigation.md) for the guided dashboard setup and `pnpm run demo:connect`. Start with `pnpm run dev --worker --baseline` to disable all investigation model requests even if provider credentials are configured. Runbooks are now versioned Markdown with [keyword retrieval and source locations](documentation-retrieval.md).

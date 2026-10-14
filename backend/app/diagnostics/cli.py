@@ -162,6 +162,7 @@ def main():
         "--runbook-id", choices=["export-permissions", "export-feature", "export-jobs"]
     )
     reader.add_argument("--limit", type=int)
+    reader.add_argument("--query")
     args = parser.parse_args()
     engine = None
     try:
@@ -186,7 +187,7 @@ def main():
                 )
                 arguments = {
                     key: value
-                    for key in ("member_id", "job_id", "request_id", "runbook_id", "limit")
+                    for key in ("member_id", "job_id", "request_id", "runbook_id", "limit", "query")
                     if (value := getattr(args, key)) is not None
                 }
                 result = DiagnosticTools(scope, settings).run(args.tool, arguments)

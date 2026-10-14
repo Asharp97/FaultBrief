@@ -102,8 +102,12 @@ class Explainer:
         self, question: str, baseline: ReportDraft, evidence: list[Evidence]
     ) -> ReportDraft:
         settings = self.settings
-        if not baseline.citations or not (
-            settings.model_provider and settings.model_name and settings.ai_provider_api_key
+        if (
+            not settings.model_explanation_enabled
+            or not baseline.citations
+            or not (
+                settings.model_provider and settings.model_name and settings.ai_provider_api_key
+            )
         ):
             return baseline
         if settings.model_provider not in {"openai", "openai-compatible"}:

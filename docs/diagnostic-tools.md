@@ -29,3 +29,7 @@ Defaults: 20 records, 64 KiB response bytes, 3 seconds per request, 20 seconds t
 `DIAGNOSTIC_DEMO_URL` defaults to `http://127.0.0.1:8001`; custom ports must match Ledger. Production requires HTTPS. `DIAGNOSTIC_DEMO_TOKEN`, `DIAGNOSTIC_BINDINGS_PATH`, and `DIAGNOSTIC_RUNBOOKS_PATH` remain server-only. Limits can be changed using `DIAGNOSTIC_MAX_RECORDS`, `DIAGNOSTIC_MAX_RESPONSE_BYTES`, `DIAGNOSTIC_REQUEST_TIMEOUT_SECONDS`, `DIAGNOSTIC_TOTAL_TIMEOUT_SECONDS`, and `DIAGNOSTIC_MAX_REQUESTS`, within their validated bounds. Never use a `NEXT_PUBLIC_` variable for a connector key.
 
 HTTP errors, timeouts, malformed/oversized responses, unexpected fields, disabled integrations, missing bindings, and cross-customer responses fail closed. Tool tests use synthetic credentials and disposable data; no Neon account or inference key is needed. For deployment, provision the private binding file and read-only credential explicitly. This first connector supports one configured Ledger endpoint; different SaaS providers and per-company credential stores are later extensions.
+
+## Markdown runbook search
+
+The runbooks tool loads approved versioned Markdown via the catalog and supports `--query` and `--limit` (1–3). Results preserve file/version/line metadata and are ranked locally. See [documentation retrieval](documentation-retrieval.md). For local sample-account approval in one command, see [your first investigation](testing-first-investigation.md). The operator helper remains outside the investigator and does not submit a ticket.

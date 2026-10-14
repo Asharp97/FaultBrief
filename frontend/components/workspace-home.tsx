@@ -7,7 +7,15 @@ import { InvestigationWorkspace } from "@/components/investigation-workspace";
 import { WorkspaceMembers } from "@/components/workspace-members";
 
 type Workspace = { id: string; name: string };
-export function WorkspaceHome({ name, email }: { name: string; email: string }) {
+export function WorkspaceHome({
+  name,
+  email,
+  showDemoSetup,
+}: {
+  name: string;
+  email: string;
+  showDemoSetup: boolean;
+}) {
   const [items, setItems] = useState<Workspace[]>([]);
   const [identity, setIdentity] = useState("");
   const [message, setMessage] = useState("");
@@ -187,7 +195,12 @@ export function WorkspaceHome({ name, email }: { name: string; email: string }) 
         </section>
       </div>
       {activeWorkspace && identity && (
-        <InvestigationWorkspace key={activeWorkspace.id} workspace={activeWorkspace} />
+        <InvestigationWorkspace
+          key={activeWorkspace.id}
+          workspace={activeWorkspace}
+          userId={identity}
+          showDemoSetup={showDemoSetup}
+        />
       )}
       {selected && identity && (
         <WorkspaceMembers key={selected.id} workspace={selected} userId={identity} />

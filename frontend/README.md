@@ -17,3 +17,7 @@ pnpm run test:e2e
 Run those commands inside `frontend`. This is no longer an `out/` static export: deploy a Next.js server or compatible managed runtime. The homepage checks the session on the server: signed-in users go directly to the dashboard; signed-out visitors see the marketing UI. Auth and private routes also run on the server.
 
 The marketing investigation samples use synthetic UI data. They do not run a model or claim a connected diagnostic worker. Browser tests use a loopback test provider/API; live Neon email/password testing uses your own development accounts.
+
+## First investigation setup
+
+Development workspace owners see a guided Ledger setup when no affected customers are connected. The command is scoped to their workspace/user, and **Refresh customers** reloads newly approved mappings. Team members and affected product customers are distinct. See [the model-free walkthrough](../docs/testing-first-investigation.md); the command is local operator setup, not a browser-accessible lab API.

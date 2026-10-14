@@ -5,6 +5,8 @@ import { environment, pnpm, root, start, startUv, stop } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 const smoke = args.includes("--smoke");
+const baseline = args.includes("--baseline");
+if (baseline && !args.includes("--worker")) throw new Error("Use --baseline with --worker.");
 const children = [];
 const generatedFiles = [];
 let stopping = false;
@@ -106,6 +108,8 @@ try {
   console.log(`Frontend: http://localhost:${ports.frontend}`);
   console.log(`API: http://127.0.0.1:${ports.api}/health`);
   console.log(`Demo: http://127.0.0.1:${ports.demo}/health`);
+  if (baseline)
+    console.log("Investigator: baseline rules and Markdown retrieval; no model inference.");
   if (smoke) captureGeneratedFiles();
   watch(
     start(
@@ -168,7 +172,13 @@ try {
           "backend.app.investigations.worker",
         ],
         {
-          env: { ...environment(), DIAGNOSTIC_DEMO_URL: `http://127.0.0.1:${ports.demo}` },
+          env: {
+            ...environment(),
+            DIAGNOSTIC_DEMO_URL: `http://127.0.0.1:${ports.demo}`,
+            ...(baseline
+              ? { INVESTIGATION_MODE: "baseline", MODEL_EXPLANATION_ENABLED: "false" }
+              : {}),
+          },
         },
       ),
       "Investigation worker",

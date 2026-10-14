@@ -94,3 +94,7 @@ Read [database/API contracts](docs/database-api.md), [architecture](docs/archite
 ## License
 
 FaultBrief source code is licensed under MIT. Dependencies and bundled font packages retain their own licenses.
+
+## Try your first investigation without tuning a model
+
+Creating a team is the first step; next connect a sample account from Ledger. The dashboard provides an owner-specific setup command and customer refresh. Follow [the step-by-step walkthrough](docs/testing-first-investigation.md). `pnpm run dev --worker --baseline` runs the complete rules/diagnostics/Markdown/report pipeline without inference. Documentation uses [versioned Markdown keyword retrieval](docs/documentation-retrieval.md); vector infrastructure is not required for the small initial corpus.

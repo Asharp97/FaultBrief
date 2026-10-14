@@ -4,19 +4,19 @@
       "id": "export-permissions",
       "version": "1",
       "title": "Export permissions",
-      "content": "Creating an export requires exports.create for the requesting member. Downloading an artifact requires exports.download. A permission_denied event with HTTP 403 identifies a rejected request. Compare the requesting member ID with current permissions; do not infer another member's access. Ask the account administrator to review the intended role before granting access. A permissions_updated event is configuration history, not proof of a failed request."
+      "path": "ledger/export-permissions.v1.md"
     },
     {
       "id": "export-feature",
       "version": "1",
       "title": "Customer export settings",
-      "content": "Customer exports_enabled must be true. A feature_disabled event with HTTP 409 identifies a request rejected by the export setting. Record the config_version and observation time; current settings can differ from historical settings. Ask the account administrator to review the intended feature configuration. Overall service health does not establish customer feature availability."
+      "path": "ledger/export-feature.v1.md"
     },
     {
       "id": "export-jobs",
       "version": "1",
       "title": "Export job investigation",
-      "content": "Correlate an export job and request logs by request_id. STORAGE_WRITE_FAILED with an export_failed event reporting a rejected artifact write supports a storage-write failure; it does not establish the underlying infrastructure cause. EXPORT_TIMEOUT identifies a timeout symptom. If downstream logs are unavailable or coverage is partial, report an inconclusive root cause and request downstream traces. A completed job and matching export_completed event establish that the observed export completed, not that every user issue is resolved."
+      "path": "ledger/export-jobs.v1.md"
     }
   ]
 }

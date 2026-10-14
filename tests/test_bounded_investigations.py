@@ -117,9 +117,9 @@ def test_model_selected_checks_produce_supported_reports_and_dispatch(
     )
     assert all(request.method == "GET" for request in harness.seen)
     if scenario == "feature_disabled":
-        assert execution.completed_steps == 2 and execution.stop_reason == "sufficient_evidence"
+        assert execution.completed_steps == 3 and execution.stop_reason == "sufficient_evidence"
         checks = harness.owner.get(endpoint(harness, iid) + "/tool-calls").json()["items"]
-        assert {item["tool_name"] for item in checks} == {"logs", "features"}
+        assert {item["tool_name"] for item in checks} == {"logs", "features", "runbooks"}
     if scenario == "ambiguous":
         assert report["root_cause"] is None and execution.stop_reason == "step_limit"
 

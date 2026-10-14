@@ -16,12 +16,12 @@ from .contracts import (
     LogsArgs,
     Members,
     PermissionsArgs,
-    Runbooks,
     RunbooksArgs,
     Scope,
     SourceJob,
     ToolResult,
 )
+from .runbooks import search_runbooks
 
 
 def redact(value: str, max_chars: int = 1000) -> str:
@@ -227,19 +227,10 @@ class DiagnosticTools:
 
     def runbooks(self, arguments):
         query = RunbooksArgs.model_validate(arguments)
-        try:
-            if self.settings.runbooks_path.stat().st_size > 32768:
-                raise DiagnosticError("runbooks_unavailable")
-            catalog = self._parse(
-                Runbooks, json.loads(self.settings.runbooks_path.read_text(encoding="utf-8"))
-            )
-        except (OSError, ValueError):
-            raise DiagnosticError("runbooks_unavailable") from None
-        items = [
-            item.model_dump(mode="json")
-            for item in catalog.items
-            if not query.runbook_id or item.id == query.runbook_id
-        ]
-        if not items:
-            raise DiagnosticError("runbook_not_found")
-        return ToolResult(tool="runbooks", state="completed", data={"items": items})
+        data, truncated = search_runbooks(self.settings.runbooks_path, query)
+        for item in data["items"]:
+            content = item["content"]
+            if self.settings.demo_token:
+                content = content.replace(self.settings.demo_token.get_secret_value(), "[redacted]")
+            item["content"] = redact(content, max_chars=4000)
+        return ToolResult(tool="runbooks", state="completed", data=data, truncated=truncated)

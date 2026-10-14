@@ -8,5 +8,11 @@ export default async function DashboardPage() {
   if (!auth) redirect("/auth/sign-in");
   const session = await auth.getSession();
   if (!session.data?.user) redirect("/auth/sign-in");
-  return <WorkspaceHome name={session.data.user.name} email={session.data.user.email} />;
+  return (
+    <WorkspaceHome
+      name={session.data.user.name}
+      email={session.data.user.email}
+      showDemoSetup={process.env.NODE_ENV !== "production"}
+    />
+  );
 }

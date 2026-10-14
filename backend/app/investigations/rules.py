@@ -21,7 +21,9 @@ def diagnose(collection: Collection) -> Finding:
             limitations.append(f"{name.title()} could not be read ({output.code}).")
         if output.truncated:
             limitations.append(
-                f"The {name} result reached its bounded limit; older records may be omitted."
+                "Only the highest-ranked matching runbooks were included."
+                if name == "runbooks"
+                else f"The {name} result reached its bounded limit; older records may be omitted."
             )
     logs = collection.results.get("logs")
     if logs and logs.data.get("coverage") == "partial":

@@ -81,9 +81,11 @@ def harness(db_session, postgres_engine, tmp_path):
 
         def handle(request):
             seen.append(request)
-            upstream = demo.get(
+            upstream = demo.request(
+                request.method,
                 request.url.raw_path.decode(),
                 headers={"Authorization": request.headers["Authorization"]},
+                **({"json": json.loads(request.content)} if request.content else {}),
             )
             return httpx2.Response(
                 upstream.status_code,
@@ -151,6 +153,9 @@ def harness(db_session, postgres_engine, tmp_path):
             actor=actor,
             seen=seen,
             db=db_session,
+            diagnostics=config,
+            transport=transport,
+            owner_id=UUID(owner_id),
         )
 
 
@@ -581,3 +586,27 @@ def test_revocation_checkpoint_prevents_further_tool_reads(harness):
         )
         == 0
     )
+
+
+def test_baseline_reads_versioned_markdown_and_never_calls_a_configured_model(harness):
+    iid, _ = harness.case("feature_disabled")
+
+    def forbidden(_request):
+        raise AssertionError("Baseline mode must not make inference requests")
+
+    worker = harness.worker(httpx2.MockTransport(forbidden), True, model_explanation_enabled=False)
+    assert worker.run_once() == "completed"
+    base = f"/v1/workspaces/{harness.workspace}/investigations/{iid}"
+    report = harness.owner.get(base + "/report").json()
+    evidence = harness.owner.get(base + "/evidence").json()["items"]
+    runbooks = [item for item in evidence if item["kind"] == "runbook"]
+    assert (
+        report["explanation_source"] == "rules"
+        and report["root_cause"] == "Exports are disabled for this customer."
+    )
+    assert runbooks and all(
+        ".v1.md#L1-L" in item["source_ref"] and item["source_version"] == "1" for item in runbooks
+    )
+    cited = {item["evidence_id"] for item in report["citations"]}
+    assert any("export-feature" in item["source_ref"] and item["id"] in cited for item in runbooks)
+    assert harness.owner.get(base + "/model-calls").json()["items"] == []
